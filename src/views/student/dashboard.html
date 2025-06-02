@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Droid+Sans:wght@400;700&display=swap");
+        * {
+            font-family: "Droid Sans", sans-serif;
+        }
+        @keyframes gradientBackground {
+            0% {
+                background-position: 0% 50%;
+                background-color: rgba(255, 179, 167, 0.3);
+            }
+            25% {
+                background-position: 50% 50%;
+                background-color: rgba(209, 179, 255, 0.3);
+            }
+            50% {
+                background-position: 100% 50%;
+                background-color: rgba(179, 199, 231, 0.3);
+            }
+            75% {
+                background-position: 50% 50%;
+                background-color: rgba(193, 179, 255, 0.3);
+            }
+            100% {
+                background-position: 0% 50%;
+                background-color: rgba(193, 231, 228, 0.3);
+            }
+        }
+        .animated-gradient {
+            background: linear-gradient(
+                45deg,
+                rgba(255, 179, 167, 0.3),
+                rgba(209, 179, 255, 0.3),
+                rgba(179, 199, 231, 0.3),
+                rgba(193, 179, 255, 0.3),
+                rgba(193, 231, 228, 0.3)
+            );
+            background-size: 200% 200%;
+            animation: gradientBackground 15s ease infinite;
+        }
+    </style>
+</head>
+<body class="animated-gradient text-gray-800">
+
+    <div class="flex h-screen">
+        <aside class="bg-gray-900 backdrop-blur-lg text-white w-64 p-6 space-y-6 shadow-lg">
+            <div class="text-2xl font-bold text-center">Student Panel</div>
+            <nav>
+                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70">View Topic</a>
+                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70">Edit Profile</a>
+                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70">Manage Thesis Work</a>
+                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70">Logout</a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 p-8 overflow-y-auto">
+            <h1 class="text-3xl font-semibold mb-6 text-gray-800">Dashboard Overview</h1>
+
+            <section id="view-topic-section" class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-6">
+                <h2 class="text-2xl font-semibold mb-4">My Thesis Topic</h2>
+                <p class="text-gray-600">Details about your assigned thesis topic and its current status.</p>
+                <div class="mt-4">
+                    <p><span class="font-semibold">Topic:</span> [Thesis Topic Title]</p>
+                    <p><span class="font-semibold">Description:</span> [Short description summary]</p>
+                    <p><span class="font-semibold">Attached File:</span> <a href="#" class="text-indigo-600 hover:underline">[Link to PDF]</a></p>
+                    <p><span class="font-semibold">Current Status:</span> [Status, e.g., Under Assignment, Active, Under Examination, Completed]</p>
+                    <p><span class="font-semibold">Committee Members:</span> [List of committee members, if appointed]</p>
+                    <p><span class="font-semibold">Time Elapsed since Official Assignment:</span> [Time elapsed, if assigned]</p>
+                </div>
+            </section>
+
+            <section id="edit-profile-section" class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-6">
+                <h2 class="text-2xl font-semibold mb-4">Edit Profile</h2>
+                <p class="text-gray-600">Manage your contact details.</p>
+                <div class="mt-4">
+                    <form>
+                        <div class="mb-4">
+                            <label for="address" class="block text-gray-700 font-semibold mb-2">Full Postal Address</label>
+                            <input type="text" id="address" name="address" class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="mb-4">
+                            <label for="email" class="block text-gray-700 font-semibold mb-2">Contact Email</label>
+                            <input type="email" id="email" name="email" class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="mb-4">
+                            <label for="mobile" class="block text-gray-700 font-semibold mb-2">Mobile Phone</label>
+                            <input type="text" id="mobile" name="mobile" class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="mb-4">
+                            <label for="landline" class="block text-gray-700 font-semibold mb-2">Landline Phone</label>
+                            <input type="text" id="landline" name="landline" class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">Save Profile</button>
+                    </form>
+                </div>
+            </section>
+            <section id="manage-thesis-section" class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-6">
+                <h2 class="text-2xl font-semibold mb-4">Manage Thesis Work</h2>
+                <p class="text-gray-600">Actions related to your thesis based on its current status.</p>
+                <div class="mt-4">
+                    <div id="under-assignment-actions" class="status-actions">
+                        <h3 class="text-xl font-medium mb-2">Under Assignment Actions</h3>
+                        <p class="text-gray-600">Select instructors for your Three-Member Committee.</p>
+                        <div class="mt-2">
+                            <input type="text" placeholder="Search instructor by ID or name" class="border border-gray-300 p-2 rounded-md mr-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">Add to Committee</button>
+                            <div class="mt-4 border-t pt-4">
+                                <h4 class="text-lg font-medium mb-2">Invited Committee Members</h4>
+                                <div class="bg-white bg-opacity-60 p-3 rounded-md mb-2">
+                                    <p class="text-sm text-gray-700">[Instructor Name] - [Status, e.g., Invited, Accepted, Rejected]</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="under-examination-actions" class="status-actions hidden">
+                        <h3 class="text-xl font-medium mb-2">Under Examination Actions</h3>
+                        <div class="mb-4">
+                             <label for="thesis-draft" class="block text-gray-700 font-semibold mb-2">Upload Thesis Draft (File)</label>
+                             <input type="file" id="thesis-draft" name="thesis-draft" class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="mb-4">
+                            <label for="supporting-material" class="block text-gray-700 font-semibold mb-2">Links to Supporting Material (e.g., Google Drive, YouTube)</label>
+                            <textarea id="supporting-material" name="supporting-material" class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500" rows="3" placeholder="Enter links here, one per line"></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <h4 class="text-lg font-medium mb-2">Examination Details</h4>
+                            <div class="bg-white bg-opacity-60 p-3 rounded-md mb-2">
+                                <div class="mb-2">
+                                    <label for="exam-date" class="block text-gray-700 font-semibold mb-2">Date</label>
+                                    <input type="date" id="exam-date" name="exam-date" class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                <div class="mb-2">
+                                    <label for="exam-time" class="block text-gray-700 font-semibold mb-2">Time</label>
+                                    <input type="time" id="exam-time" name="exam-time" class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                <div class="mb-2">
+                                    <label for="exam-method" class="block text-gray-700 font-semibold mb-2">Method</label>
+                                    <select id="exam-method" name="exam-method" class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="in-person">In-person</option>
+                                        <option value="online">Online</option>
+                                    </select>
+                                </div>
+                                <div id="in-person-details" class="mb-2">
+                                    <label for="exam-room" class="block text-gray-700 font-semibold mb-2">Examination Room</label>
+                                    <input type="text" id="exam-room" name="exam-room" class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                <div id="online-details" class="mb-2 hidden">
+                                    <label for="connection-link" class="block text-gray-700 font-semibold mb-2">Connection Link</label>
+                                    <input type="url" id="connection-link" name="connection-link" class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 border-t pt-4">
+                            <h4 class="text-lg font-medium mb-2">Post-Examination</h4>
+                            <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 mr-2">View Examination Report</button>
+                            <div class="mt-4">
+                                <label for="library-link" class="block text-gray-700 font-semibold mb-2">Link to Library Repository (Nemertis)</label>
+                                <input type="url" id="library-link" name="library-link" class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500">
+                                <button class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">Submit Library Link</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="completed-actions" class="status-actions hidden">
+                        <h3 class="text-xl font-medium mb-2">Completed Thesis</h3>
+                        <p class="text-gray-600">Your thesis is completed. You can view the information and report.</p>
+                        <div class="mt-4">
+                            <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 mr-2">View Thesis Information</button>
+                            <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">View Examination Report</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+    <script>
+        // Initialize the dashboard by showing only the first section and hiding others
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('main section');
+            sections.forEach((section, index) => {
+                if (index === 0) {
+                    section.classList.remove('hidden');
+                } else {
+                    section.classList.add('hidden');
+                }
+            });
+        });
+
+        // Handle sidebar navigation
+        document.querySelectorAll('aside a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // Map navigation text to section IDs
+                const navText = this.innerText.trim();
+                const sectionMap = {
+                    'View Topic': 'view-topic-section',
+                    'Edit Profile': 'edit-profile-section',
+                    'Manage Thesis Work': 'manage-thesis-section'
+                };
+
+                // Hide all sections
+                document.querySelectorAll('main section').forEach(section => {
+                    section.classList.add('hidden');
+                });
+
+                // Show the relevant section based on navigation or handle special cases
+                if (navText in sectionMap) {
+                    document.getElementById(sectionMap[navText]).classList.remove('hidden');
+                    // If Manage Thesis Work is clicked, show the appropriate actions based on status
+                    if (navText === 'Manage Thesis Work') {
+                        // For demonstration, showing under-assignment-actions
+                        document.getElementById('under-assignment-actions').classList.remove('hidden');
+                    }
+                } else if (navText === 'Logout') {
+                    // Handle logout - in a real app, this would redirect to a logout endpoint
+                    console.log('Logout clicked - would redirect in a real app');
+                    // window.location.href = '/logout'; // Uncomment in real implementation
+                }
+            });
+        });
+
+        // Script to show/hide in-person/online examination details
+        const examMethodSelect = document.getElementById('exam-method');
+        if (examMethodSelect) {
+            examMethodSelect.addEventListener('change', function() {
+                const inPersonDetails = document.getElementById('in-person-details');
+                const onlineDetails = document.getElementById('online-details');
+                if (this.value === 'in-person') {
+                    inPersonDetails.classList.remove('hidden');
+                    onlineDetails.classList.add('hidden');
+                } else {
+                    inPersonDetails.classList.add('hidden');
+                    onlineDetails.classList.remove('hidden');
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
