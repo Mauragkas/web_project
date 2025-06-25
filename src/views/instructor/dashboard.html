@@ -1,245 +1,395 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instructor Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url("https://fonts.googleapis.com/css2?family=Droid+Sans:wght@400;700&display=swap");
-        * {
-            font-family: "Droid Sans", sans-serif;
-        }
-        @keyframes gradientBackground {
-            0% {
-                background-position: 0% 50%;
-                background-color: rgba(255, 179, 167, 0.3);
+    <head>
+        <link rel="icon" href="/favicon.jpg" type="image/jpeg" />
+
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Instructor Dashboard</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="/css/style.css" />
+        <script src="/js/main.js" defer></script>
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Droid+Sans:wght@400;700&display=swap");
+            * {
+                font-family: "Droid Sans", sans-serif;
             }
-            25% {
-                background-position: 50% 50%;
-                background-color: rgba(209, 179, 255, 0.3);
+            @keyframes gradientBackground {
+                0% {
+                    background-position: 0% 50%;
+                    background-color: rgba(255, 179, 167, 0.3);
+                }
+                25% {
+                    background-position: 50% 50%;
+                    background-color: rgba(209, 179, 255, 0.3);
+                }
+                50% {
+                    background-position: 100% 50%;
+                    background-color: rgba(179, 199, 231, 0.3);
+                }
+                75% {
+                    background-position: 50% 50%;
+                    background-color: rgba(193, 179, 255, 0.3);
+                }
+                100% {
+                    background-position: 0% 50%;
+                    background-color: rgba(193, 231, 228, 0.3);
+                }
             }
-            50% {
-                background-position: 100% 50%;
-                background-color: rgba(179, 199, 231, 0.3);
+            .animated-gradient {
+                background: linear-gradient(
+                    45deg,
+                    rgba(255, 179, 167, 0.3),
+                    rgba(209, 179, 255, 0.3),
+                    rgba(179, 199, 231, 0.3),
+                    rgba(193, 179, 255, 0.3),
+                    rgba(193, 231, 228, 0.3)
+                );
+                background-size: 200% 200%;
+                animation: gradientBackground 15s ease infinite;
             }
-            75% {
-                background-position: 50% 50%;
-                background-color: rgba(193, 179, 255, 0.3);
-            }
-            100% {
-                background-position: 0% 50%;
-                background-color: rgba(193, 231, 228, 0.3);
-            }
-        }
-        .animated-gradient {
-            background: linear-gradient(
-                45deg,
-                rgba(255, 179, 167, 0.3),
-                rgba(209, 179, 255, 0.3),
-                rgba(179, 199, 231, 0.3),
-                rgba(193, 179, 255, 0.3),
-                rgba(193, 231, 228, 0.3)
-            );
-            background-size: 200% 200%;
-            animation: gradientBackground 15s ease infinite;
-        }
-    </style>
-</head>
-<!-- <body class="animated-gradient text-gray-800"> -->
-<body class="bg-gray-100 text-gray-800">
-
-    <div class="flex h-screen">
-        <aside class="bg-gray-900 backdrop-blur-lg text-white w-64 p-6 space-y-6 shadow-lg">
-            <div class="text-2xl font-bold text-center">Instructor Panel</div>
-            <nav>
-                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70">View & Create Topics</a>
-                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70">Assign Topic</a>
-                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70">View Theses</a>
-                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70">View Invitations</a>
-                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70">View Statistics</a>
-                <a href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70">Logout</a>
-            </nav>
-        </aside>
-
-        <main class="flex-1 p-8 overflow-y-auto">
-            <h1 class="text-3xl font-semibold mb-6 text-gray-800">Dashboard Overview</h1>
-
-            <section id="topics-section" class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-6">
-                <h2 class="text-2xl font-semibold mb-4">Thesis Topics</h2>
-                <p class="text-gray-600">Here you can view existing topics you created and add new ones.</p>
-                <div class="mt-4">
-                    <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">Create New Topic</button>
-                    <div class="mt-4 border-t pt-4">
-                        <h3 class="text-xl font-medium mb-2">Your Topics</h3>
-                        <div class="bg-white bg-opacity-60 p-3 rounded-md mb-2 flex justify-between items-center">
-                            <div>
-                                <p class="font-semibold">Topic Title Example</p>
-                                <p class="text-sm text-gray-500">Short description summary...</p>
-                            </div>
-                            <div>
-                                <button class="text-sm text-indigo-600 hover:underline mr-2">Edit</button>
-                                <button class="text-sm text-red-500 hover:underline">Delete</button>
-                            </div>
-                        </div>
-                    </div>
+        </style>
+    </head>
+    <!-- <body class="animated-gradient text-gray-800"> -->
+    <body class="bg-gray-100 text-gray-800">
+        <div class="flex h-screen">
+            <aside
+                class="bg-gray-900 backdrop-blur-lg text-white w-64 p-6 space-y-6 shadow-lg"
+            >
+                <div class="text-2xl font-bold text-center">
+                    Instructor Panel
                 </div>
-            </section>
+                <nav>
+                    <a
+                        href="/public/announcements"
+                        class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70"
+                        >Home</a
+                    >
+                    <a
+                        href="#"
+                        class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70"
+                        >View & Create Topics</a
+                    >
+                    <a
+                        href="#"
+                        class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70"
+                        >Assign Topic</a
+                    >
+                    <a
+                        href="#"
+                        class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70"
+                        >View Theses</a
+                    >
+                    <a
+                        href="#"
+                        class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70"
+                        >View Invitations</a
+                    >
+                    <a
+                        href="#"
+                        class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70"
+                        >View Statistics</a
+                    >
+                    <a
+                        href="#"
+                        class="logout-button block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70"
+                        >Logout</a
+                    >
+                </nav>
+            </aside>
 
-            <section id="assign-section" class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-6">
-                <h2 class="text-2xl font-semibold mb-4">Assign Topic to Student</h2>
-                <p class="text-gray-600">Assign an available topic to a student by searching for them.</p>
-                <div class="mt-4">
-                    <input type="text" placeholder="Search student by ID or name" class="border border-gray-300 p-2 rounded-md mr-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">Search & Assign</button>
-                </div>
-            </section>
+            <main class="flex-1 p-8 overflow-y-auto">
+                <h1 class="text-3xl font-semibold mb-6 text-gray-800">
+                    Dashboard Overview
+                </h1>
 
-            <section id="theses-section" class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-6">
-                <h2 class="text-2xl font-semibold mb-4">Your Theses</h2>
-                <p class="text-gray-600">View theses you are involved in as supervisor or committee member.</p>
-                <div class="mt-4">
-                    <div class="flex space-x-4 mb-4">
-                        <select class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">Filter by Status</option>
-                            <option value="under-assignment">Under Assignment</option>
-                            <option value="active">Active</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                        <select class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">Filter by Role</option>
-                            <option value="supervisor">Supervisor</option>
-                            <option value="committee">Committee Member</option>
-                        </select>
-                    </div>
-                    <div class="bg-white bg-opacity-60 p-3 rounded-md mb-2 flex justify-between items-center">
-                        <div>
-                            <p class="font-semibold">Thesis Title Example</p>
-                            <p class="text-sm text-gray-500">Student Name - Status: Active</p>
-                        </div>
-                        <div>
-                            <button class="text-sm text-indigo-600 hover:underline mr-2">View Details</button>
-                        </div>
-                    </div>
-                    <button class="mt-4 bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75 mr-2">Export List (CSV)</button>
-                    <button class="mt-4 bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75">Export List (JSON)</button>
-                </div>
-            </section>
-
-            <section id="invitations-section" class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-6">
-                <h2 class="text-2xl font-semibold mb-4">Committee Invitations</h2>
-                <p class="text-gray-600">View and respond to invitations to join thesis committees.</p>
-                <div class="mt-4">
-                    <div class="bg-white bg-opacity-60 p-3 rounded-md mb-2 flex justify-between items-center">
-                        <div>
-                            <p class="font-semibold">Invitation for Thesis: Another Thesis Title</p>
-                            <p class="text-sm text-gray-500">Invited by: Supervisor Name</p>
-                        </div>
-                        <div>
-                            <button class="text-sm text-green-500 hover:underline mr-2">Accept</button>
-                            <button class="text-sm text-red-500 hover:underline">Reject</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <section id="statistics-section" class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-6">
-                <h2 class="text-2xl font-semibold mb-4">Statistics</h2>
-                <p class="text-gray-600">View graphical statistics about theses you are involved in.</p>
-                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white bg-opacity-60 p-4 rounded-md shadow-sm">
-                        <h3 class="text-xl font-medium mb-2">Average Completion Time</h3>
-                        <div class="h-40 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-md">Chart Placeholder</div>
-                    </div>
-                    <div class="bg-white bg-opacity-60 p-4 rounded-md shadow-sm">
-                        <h3 class="text-xl font-medium mb-2">Average Grade</h3>
-                        <div class="h-40 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-md">Chart Placeholder</div>
-                    </div>
-                    <div class="bg-white bg-opacity-60 p-4 rounded-md col-span-1 md:col-span-2 shadow-sm">
-                        <h3 class="text-xl font-medium mb-2">Total Number of Theses</h3>
-                        <div class="h-40 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-md">Chart Placeholder</div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="thesis-details-section" class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg hidden">
-                <h2 class="text-2xl font-semibold mb-4">Thesis Details</h2>
-                <p class="text-gray-600">Details and management options for the selected thesis.</p>
-                <div class="mt-4">
-                    <h3 class="text-xl font-medium mb-2">Basic Information</h3>
-                    <p>Topic: [Topic Title]</p>
-                    <p>Student: [Student Name]</p>
-                    <p>Committee: [Committee Members]</p>
-
-                    <h3 class="text-xl font-medium mt-4 mb-2">Chronology</h3>
-                    <ul class="list-disc list-inside">
-                        <li>Status changed to Under Assignment [Date]</li>
-                        <li>Status changed to Active [Date]</li>
-                    </ul>
-
+                <section
+                    id="topics-section"
+                    class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-6"
+                >
+                    <h2 class="text-2xl font-semibold mb-4">Thesis Topics</h2>
+                    <p class="text-gray-600">
+                        Here you can view existing topics you created and add
+                        new ones.
+                    </p>
                     <div class="mt-4">
-                        <h3 class="text-xl font-medium mb-2">Management Actions</h3>
-                        <button class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mr-2">Cancel Assignment</button>
-                        <button class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-75 mr-2">Change Status to Under Examination</button>
-                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">Record Grade</button>
-                        <div class="mt-4">
-                            <h4 class="text-lg font-medium mb-2">Notes</h4>
-                            <textarea class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500" rows="3" placeholder="Add a note (max 300 characters)"></textarea>
-                            <button class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1 px-3 rounded-lg shadow-md text-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">Add Note</button>
-                            <div class="mt-2 text-sm text-gray-700">
-                                <p>Note 1: [Note content] - [Date]</p>
-                                <p>Note 2: [Note content] - [Date]</p>
+                        <button
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
+                        >
+                            Create New Topic
+                        </button>
+                        <div class="mt-4 border-t pt-4">
+                            <h3 class="text-xl font-medium mb-2">
+                                Your Topics
+                            </h3>
+                            <div
+                                class="bg-white bg-opacity-60 p-3 rounded-md mb-2 flex justify-between items-center"
+                            >
+                                <div>
+                                    <p class="font-semibold">
+                                        Topic Title Example
+                                    </p>
+                                    <p class="text-sm text-gray-500">
+                                        Short description summary...
+                                    </p>
+                                </div>
+                                <div>
+                                    <button
+                                        class="text-sm text-indigo-600 hover:underline mr-2"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        class="text-sm text-red-500 hover:underline"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
-        </main>
-    </div>
-    <script>
-        // Initialize the dashboard by showing only the first section and hiding others
-        document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('main section');
-            sections.forEach((section, index) => {
-                if (index === 0) {
-                    section.classList.remove('hidden');
-                } else {
-                    section.classList.add('hidden');
-                }
-            });
-        });
+                </section>
 
-        // Handle sidebar navigation
-        document.querySelectorAll('aside a').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
+                <section
+                    id="assign-section"
+                    class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-6"
+                >
+                    <h2 class="text-2xl font-semibold mb-4">
+                        Assign Topic to Student
+                    </h2>
+                    <p class="text-gray-600">
+                        Assign an available topic to a student by searching for
+                        them.
+                    </p>
+                    <div class="mt-4">
+                        <input
+                            type="text"
+                            placeholder="Search student by ID or name"
+                            class="border border-gray-300 p-2 rounded-md mr-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        />
+                        <button
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
+                        >
+                            Search & Assign
+                        </button>
+                    </div>
+                </section>
 
-                // Map navigation text to section IDs
-                const navText = this.innerText.trim();
-                const sectionMap = {
-                    'View & Create Topics': 'topics-section',
-                    'Assign Topic': 'assign-section',
-                    'View Theses': 'theses-section',
-                    'View Invitations': 'invitations-section',
-                    'View Statistics': 'statistics-section'
-                };
+                <section
+                    id="theses-section"
+                    class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-6"
+                >
+                    <h2 class="text-2xl font-semibold mb-4">Your Theses</h2>
+                    <p class="text-gray-600">
+                        View theses you are involved in as supervisor or
+                        committee member.
+                    </p>
+                    <div class="mt-4">
+                        <div class="flex space-x-4 mb-4">
+                            <select
+                                class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                            >
+                                <option value="">Filter by Status</option>
+                                <option value="under-assignment">
+                                    Under Assignment
+                                </option>
+                                <option value="active">Active</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            <select
+                                class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                            >
+                                <option value="">Filter by Role</option>
+                                <option value="supervisor">Supervisor</option>
+                                <option value="committee">
+                                    Committee Member
+                                </option>
+                            </select>
+                        </div>
+                        <div
+                            class="bg-white bg-opacity-60 p-3 rounded-md mb-2 flex justify-between items-center"
+                        >
+                            <div>
+                                <p class="font-semibold">
+                                    Thesis Title Example
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    Student Name - Status: Active
+                                </p>
+                            </div>
+                            <div>
+                                <button
+                                    class="text-sm text-indigo-600 hover:underline mr-2"
+                                >
+                                    View Details
+                                </button>
+                            </div>
+                        </div>
+                        <button
+                            class="mt-4 bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75 mr-2"
+                        >
+                            Export List (CSV)
+                        </button>
+                        <button
+                            class="mt-4 bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75"
+                        >
+                            Export List (JSON)
+                        </button>
+                    </div>
+                </section>
 
-                // Hide all sections
-                document.querySelectorAll('main section').forEach(section => {
-                    section.classList.add('hidden');
-                });
+                <section
+                    id="invitations-section"
+                    class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-6"
+                >
+                    <h2 class="text-2xl font-semibold mb-4">
+                        Committee Invitations
+                    </h2>
+                    <p class="text-gray-600">
+                        View and respond to invitations to join thesis
+                        committees.
+                    </p>
+                    <div class="mt-4">
+                        <div
+                            class="bg-white bg-opacity-60 p-3 rounded-md mb-2 flex justify-between items-center"
+                        >
+                            <div>
+                                <p class="font-semibold">
+                                    Invitation for Thesis: Another Thesis Title
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    Invited by: Supervisor Name
+                                </p>
+                            </div>
+                            <div>
+                                <button
+                                    class="text-sm text-green-500 hover:underline mr-2"
+                                >
+                                    Accept
+                                </button>
+                                <button
+                                    class="text-sm text-red-500 hover:underline"
+                                >
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section
+                    id="statistics-section"
+                    class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-6"
+                >
+                    <h2 class="text-2xl font-semibold mb-4">Statistics</h2>
+                    <p class="text-gray-600">
+                        View graphical statistics about theses you are involved
+                        in.
+                    </p>
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div
+                            class="bg-white bg-opacity-60 p-4 rounded-md shadow-sm"
+                        >
+                            <h3 class="text-xl font-medium mb-2">
+                                Average Completion Time
+                            </h3>
+                            <div
+                                class="h-40 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-md"
+                            >
+                                Chart Placeholder
+                            </div>
+                        </div>
+                        <div
+                            class="bg-white bg-opacity-60 p-4 rounded-md shadow-sm"
+                        >
+                            <h3 class="text-xl font-medium mb-2">
+                                Average Grade
+                            </h3>
+                            <div
+                                class="h-40 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-md"
+                            >
+                                Chart Placeholder
+                            </div>
+                        </div>
+                        <div
+                            class="bg-white bg-opacity-60 p-4 rounded-md col-span-1 md:col-span-2 shadow-sm"
+                        >
+                            <h3 class="text-xl font-medium mb-2">
+                                Total Number of Theses
+                            </h3>
+                            <div
+                                class="h-40 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-md"
+                            >
+                                Chart Placeholder
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-                // Show the relevant section based on navigation or handle special cases
-                if (navText in sectionMap) {
-                    document.getElementById(sectionMap[navText]).classList.remove('hidden');
-                } else if (navText === 'Logout') {
-                    // Handle logout - in a real app, this would redirect to a logout endpoint
-                    console.log('Logout clicked - would redirect in a real app');
-                    // window.location.href = '/logout'; // Uncomment in real implementation
-                }
-            });
-        });
-    </script>
+                <section
+                    id="thesis-details-section"
+                    class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg hidden"
+                >
+                    <h2 class="text-2xl font-semibold mb-4">Thesis Details</h2>
+                    <p class="text-gray-600">
+                        Details and management options for the selected thesis.
+                    </p>
+                    <div class="mt-4">
+                        <h3 class="text-xl font-medium mb-2">
+                            Basic Information
+                        </h3>
+                        <p>Topic: [Topic Title]</p>
+                        <p>Student: [Student Name]</p>
+                        <p>Committee: [Committee Members]</p>
 
-</body>
+                        <h3 class="text-xl font-medium mt-4 mb-2">
+                            Chronology
+                        </h3>
+                        <ul class="list-disc list-inside">
+                            <li>Status changed to Under Assignment [Date]</li>
+                            <li>Status changed to Active [Date]</li>
+                        </ul>
+
+                        <div class="mt-4">
+                            <h3 class="text-xl font-medium mb-2">
+                                Management Actions
+                            </h3>
+                            <button
+                                class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mr-2"
+                            >
+                                Cancel Assignment
+                            </button>
+                            <button
+                                class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-75 mr-2"
+                            >
+                                Change Status to Under Examination
+                            </button>
+                            <button
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
+                            >
+                                Record Grade
+                            </button>
+                            <div class="mt-4">
+                                <h4 class="text-lg font-medium mb-2">Notes</h4>
+                                <textarea
+                                    class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"
+                                    rows="3"
+                                    placeholder="Add a note (max 300 characters)"
+                                ></textarea>
+                                <button
+                                    class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1 px-3 rounded-lg shadow-md text-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
+                                >
+                                    Add Note
+                                </button>
+                                <div class="mt-2 text-sm text-gray-700">
+                                    <p>Note 1: [Note content] - [Date]</p>
+                                    <p>Note 2: [Note content] - [Date]</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </body>
 </html>
