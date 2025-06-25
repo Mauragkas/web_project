@@ -44,6 +44,11 @@ app.use(
 // Use routes
 app.use("/", routes);
 
+// 404 handler for unmatched routes
+app.use((req, res, next) => {
+  res.status(404).sendFile(path.join(__dirname, "views/404.html"));
+});
+
 // Initialize the database and start the server
 async function startServer() {
   try {
