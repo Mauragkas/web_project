@@ -1,4 +1,4 @@
-// const bcrypt = require("bcrypt");
+const bcrypt = require("bcrypt");
 const { getOne } = require("../db/database");
 
 class AuthService {
@@ -21,8 +21,9 @@ class AuthService {
         return null;
       }
 
-      // Plain text password check
-      if (password !== user.password) {
+      // Compare hash
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) {
         return null;
       }
 

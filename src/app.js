@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
@@ -29,7 +30,7 @@ app.use(
       db: "sessions.sqlite",
       dir: path.join(__dirname, "../database"),
     }),
-    secret: "thesis-management-secret-key",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {

@@ -10,10 +10,12 @@ async function seedUsers() {
       return;
     }
 
-    // Use plain text passwords for now
-    const studentPassword = "student123";
-    const instructorPassword = "instructor123";
-    const secretariatPassword = "secretariat123";
+    // Hash passwords before inserting
+    const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
+
+    const studentPassword = await bcrypt.hash("student123", saltRounds);
+    const instructorPassword = await bcrypt.hash("instructor123", saltRounds);
+    const secretariatPassword = await bcrypt.hash("secretariat123", saltRounds);
 
     // Insert sample users
     await executeRun(
