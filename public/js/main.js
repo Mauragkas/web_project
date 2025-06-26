@@ -560,15 +560,64 @@ async function loadInstructorTheses() {
 
     // Attach event listeners for "View Details" if needed
     document.querySelectorAll(".view-thesis-details-btn").forEach((btn) => {
-      btn.addEventListener("click", function () {
-        // You can implement a modal or redirect to a details page
-        alert("Thesis details for ID: " + btn.getAttribute("data-thesis-id"));
+      btn.addEventListener("click", async function () {
+        const thesisId = btn.getAttribute("data-thesis-id");
+        showThesisDetailsModal(thesisId);
       });
     });
   } catch (err) {
     listDiv.innerHTML = `<div class="text-red-500 text-center">Server error loading theses.</div>`;
   }
 }
+
+// ---- Modal for Instructor Thesis Details ----
+async function showThesisDetailsModal(thesisId) {
+  const modal = document.getElementById("thesisDetailsModal");
+  const content = document.getElementById("thesis-details-content");
+  modal.classList.remove("hidden");
+  content.innerHTML = '<div class="text-center text-gray-500">Loading...</div>';
+
+  try {
+    const res = await fetch(
+      `/instructor/api/instructor/theses/${thesisId}/details`,
+    );
+    const data = await res.json();
+    if (!data.success) {
+      content.innerHTML = `<div class="text-red-500 text-center">${data.message || "Failed to load thesis details."}</div>`;
+      return;
+    }
+    const t = data.thesis;
+    content.innerHTML = `
+      <div>
+        <h3 class="text-xl font-semibold mb-2">${t.topic_title}</h3>
+        <p><span class="font-semibold">Student:</span> ${t.student_name} (${t.student_email || "-"})</p>
+        <p><span class="font-semibold">Supervisor:</span> ${t.supervisor_name} (${t.supervisor_email || "-"})</p>
+        <p><span class="font-semibold">Committee:</span> ${t.committee_members || "-"}</p>
+        <p><span class="font-semibold">Status:</span> ${t.status}</p>
+        <p><span class="font-semibold">Assigned Date:</span> ${t.assigned_date ? new Date(t.assigned_date).toLocaleDateString() : "-"}</p>
+        <p><span class="font-semibold">Completion Date:</span> ${t.completion_date ? new Date(t.completion_date).toLocaleDateString() : "-"}</p>
+        <p><span class="font-semibold">Grade:</span> ${t.grade || "-"}</p>
+        <p><span class="font-semibold">AP Number:</span> ${t.ap_number || "-"}</p>
+        <p><span class="font-semibold">Library Link:</span> ${t.library_link ? `<a href="${t.library_link}" target="_blank" class="text-indigo-600 underline">Nemertis</a>` : "-"}</p>
+        <p><span class="font-semibold">Description:</span> ${t.topic_description || "-"}</p>
+        <p><span class="font-semibold">Attached File:</span> ${t.topic_document_path ? `<a href="${t.topic_document_path}" target="_blank" class="text-indigo-600 underline">PDF</a>` : "No file"}</p>
+      </div>
+    `;
+  } catch (err) {
+    content.innerHTML = `<div class="text-red-500 text-center">Server error loading thesis details.</div>`;
+  }
+}
+
+document
+  .getElementById("closeThesisDetailsModal")
+  ?.addEventListener("click", function () {
+    document.getElementById("thesisDetailsModal").classList.add("hidden");
+  });
+document
+  .getElementById("thesisDetailsModal")
+  ?.addEventListener("click", function (e) {
+    if (e.target === this) this.classList.add("hidden");
+  });
 
 // ---- Session validity check for dashboard protection ----
 function checkSessionValidity() {

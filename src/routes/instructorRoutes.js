@@ -112,4 +112,10 @@ router.get(
   instructorController.getThesesList,
 );
 
+router.get(
+  "/api/instructor/theses/:thesisId/details",
+  authMiddleware("instructor"),
+  instructorController.getThesisDetails,
+);
+
 module.exports = router;

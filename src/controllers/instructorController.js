@@ -283,6 +283,30 @@ class InstructorController {
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }
+
+  async getThesisDetails(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const thesisId = req.params.thesisId;
+      // You may want to check if instructor is supervisor or committee for this thesis
+      const thesis = await instructorService.getThesisDetailsForInstructor(
+        thesisId,
+        instructorId,
+      );
+      if (!thesis) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message: "Thesis not found or access denied",
+          });
+      }
+      return res.json({ success: true, thesis });
+    } catch (error) {
+      console.error("Get thesis details error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
 }
 
 module.exports = new InstructorController();

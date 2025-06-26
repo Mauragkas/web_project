@@ -503,5 +503,26 @@
                 </form>
             </div>
         </div>
+        <!-- Thesis Details Modal -->
+        <div
+            id="thesisDetailsModal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+        >
+            <div
+                class="bg-white rounded-lg shadow-xl max-w-2xl w-full relative p-8"
+            >
+                <button
+                    id="closeThesisDetailsModal"
+                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl"
+                >
+                    &times;
+                </button>
+                <h2 class="text-2xl font-bold mb-4">Thesis Details</h2>
+                <div id="thesis-details-content">
+                    <!-- Details will be injected here -->
+                    <div class="text-center text-gray-500">Loading...</div>
+                </div>
+            </div>
+        </div>
     </body>
 </html>

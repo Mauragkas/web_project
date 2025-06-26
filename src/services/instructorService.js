@@ -170,6 +170,44 @@ class InstructorService {
       throw error;
     }
   }
+
+  async getThesisDetailsForInstructor(thesisId, instructorId) {
+    // Only allow if instructor is supervisor or committee member
+    const query = `
+      SELECT
+        t.id as thesis_id,
+        t.status,
+        t.assigned_date,
+        t.completion_date,
+        t.grade,
+        t.ap_number,
+        t.library_link,
+        tt.title as topic_title,
+        tt.description as topic_description,
+        tt.document_path as topic_document_path,
+        s.full_name as supervisor_name,
+        s.email as supervisor_email,
+        GROUP_CONCAT(cm2.full_name, ', ') as committee_members,
+        u.full_name as student_name,
+        u.email as student_email
+      FROM theses t
+      JOIN thesis_topics tt ON t.topic_id = tt.id
+      JOIN users s ON t.supervisor_id = s.id
+      JOIN users u ON t.student_id = u.id
+      LEFT JOIN committee_members cm ON cm.thesis_id = t.id
+      LEFT JOIN users cm2 ON cm2.id = cm.instructor_id
+      WHERE t.id = ?
+        AND (t.supervisor_id = ? OR cm.instructor_id = ?)
+      GROUP BY t.id
+      LIMIT 1
+    `;
+    const rows = await require("../db/database").executeQuery(query, [
+      thesisId,
+      instructorId,
+      instructorId,
+    ]);
+    return rows[0] || null;
+  }
 }
 
 module.exports = new InstructorService();
