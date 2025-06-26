@@ -109,6 +109,43 @@ function getOne(query, params = []) {
   });
 }
 
+// Find instructors by name or username
+function findInstructors(query) {
+  const q = `%${query}%`;
+  return executeQuery(
+    `SELECT id, username, full_name, email
+     FROM users
+     WHERE role = 'instructor' AND (username LIKE ? OR full_name LIKE ?)
+     LIMIT 10`,
+    [q, q],
+  );
+}
+
+// Insert committee invitations (bulk)
+function insertCommitteeInvitations(thesisId, instructorIds) {
+  const ops = instructorIds.map((id) => ({
+    query: `INSERT INTO committee_members (thesis_id, instructor_id, status) VALUES (?, ?, 'Invited')`,
+    params: [thesisId, id],
+  }));
+  return executeTransaction(ops);
+}
+
+// Get count of accepted committee members for a thesis
+function countAcceptedCommittee(thesisId) {
+  return getOne(
+    `SELECT COUNT(*) as acceptedCount FROM committee_members WHERE thesis_id = ? AND status = 'Accepted'`,
+    [thesisId],
+  );
+}
+
+// Update thesis status
+function updateThesisStatus(thesisId, status) {
+  return executeRun(`UPDATE theses SET status = ? WHERE id = ?`, [
+    status,
+    thesisId,
+  ]);
+}
+
 // Get a single thesis topic by id and instructor
 function getThesisTopicByIdAndInstructor(topicId, instructorId) {
   return getOne(
@@ -152,4 +189,8 @@ module.exports = {
   },
   getThesisTopicByIdAndInstructor,
   updateThesisTopic,
+  findInstructors,
+  insertCommitteeInvitations,
+  countAcceptedCommittee,
+  updateThesisStatus,
 };

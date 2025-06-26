@@ -8,7 +8,7 @@
         <title>Student Dashboard</title>
         <link rel="stylesheet" href="/css/style.css" />
         <script src="https://cdn.tailwindcss.com"></script>
-        <script src="/js/main.js"></script>
+        <script type="module" src="/js/main.js"></script>
         <script>
             // Check session validity immediately and when tab becomes visible
             document.addEventListener("DOMContentLoaded", function () {
@@ -200,6 +200,37 @@
                                 Select instructors for your Three-Member
                                 Committee.
                             </p>
+                            <!-- Added committee selection UI as per prompt -->
+                            <div id="committee-selection" class="mb-6">
+                                <h3 class="text-lg font-semibold mb-2">
+                                    Select Committee Members
+                                </h3>
+                                <input
+                                    type="text"
+                                    id="instructor-search"
+                                    placeholder="Search instructor by name or username"
+                                    class="form-input mb-2"
+                                />
+                                <div
+                                    id="instructor-search-results"
+                                    class="mb-2"
+                                ></div>
+                                <div
+                                    id="selected-instructors"
+                                    class="mb-2"
+                                ></div>
+                                <button
+                                    id="send-invitations-btn"
+                                    class="btn btn-primary"
+                                    disabled
+                                >
+                                    Send Invitations
+                                </button>
+                                <div
+                                    id="committee-message"
+                                    class="mt-2 text-sm font-medium hidden"
+                                ></div>
+                            </div>
                             <div class="mt-2">
                                 <input
                                     type="text"

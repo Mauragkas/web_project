@@ -1,4 +1,7 @@
 const {
+  insertCommitteeInvitations,
+  countAcceptedCommittee,
+  updateThesisStatus,
   executeRun,
   getOne,
   executeQuery,
@@ -235,6 +238,23 @@ class ThesisService {
     // For role-specific queries, instructor_id is used twice for CASE
     const caseParams = [instructorId, instructorId];
     return executeQuery(query, [...caseParams, ...params]);
+  }
+  async createCommitteeInvitations(thesisId, instructorIds) {
+    // Insert invitations
+    await insertCommitteeInvitations(thesisId, instructorIds);
+    // Optionally: return the inserted rows or just success
+    return { success: true };
+  }
+
+  // Called when an instructor accepts an invitation
+  async handleCommitteeAcceptance(thesisId) {
+    const { acceptedCount } = await countAcceptedCommittee(thesisId);
+    if (acceptedCount >= 2) {
+      // Transition thesis to Active
+      await updateThesisStatus(thesisId, "Active");
+      return { status: "Active" };
+    }
+    return { status: "Under Assignment" };
   }
 }
 

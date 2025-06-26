@@ -1,4 +1,5 @@
 const { executeQuery, getOne } = require("../db/database");
+const thesisService = require("./thesisService");
 
 class StudentService {
   async findStudentByIdOrName(query) {
@@ -67,6 +68,15 @@ class StudentService {
       [studentId],
     );
     return thesis;
+  }
+  async processCommitteeInvitations(thesisId, instructorIds) {
+    // Validate: instructorIds is array, thesisId belongs to student, etc.
+    if (!Array.isArray(instructorIds) || instructorIds.length === 0) {
+      throw new Error("No instructors selected");
+    }
+    // Insert invitations
+    await thesisService.createCommitteeInvitations(thesisId, instructorIds);
+    return { success: true };
   }
 }
 

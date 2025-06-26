@@ -692,10 +692,103 @@ async function loadStudentThesisInfo() {
           : "-"
       }</p>
     `;
+
+    // --- Committee selection logic ---
+    // Store thesisId for invitation use
+    window.studentThesisId = thesis.id;
   } catch (err) {
     detailsDiv.innerHTML = `<div class="text-red-500">Server error loading thesis info.</div>`;
   }
 }
+
+// --- Committee selection logic ---
+let selectedInstructors = [];
+
+document
+  .getElementById("instructor-search")
+  ?.addEventListener("input", async function () {
+    const query = this.value.trim();
+    if (!query) {
+      document.getElementById("instructor-search-results").innerHTML = "";
+      return;
+    }
+    const res = await fetch(
+      `/student/api/student/committee/instructors?query=${encodeURIComponent(query)}`,
+    );
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById("instructor-search-results").innerHTML =
+        data.instructors
+          .map(
+            (i) =>
+              `<div class="p-2 bg-gray-100 rounded mb-1 cursor-pointer instructor-result" data-id="${i.id}" data-name="${i.full_name}">${i.full_name} (${i.username})</div>`,
+          )
+          .join("");
+      document.querySelectorAll(".instructor-result").forEach((el) => {
+        el.addEventListener("click", function () {
+          const id = this.getAttribute("data-id");
+          const name = this.getAttribute("data-name");
+          if (!selectedInstructors.find((i) => i.id == id)) {
+            selectedInstructors.push({ id, name });
+            renderSelectedInstructors();
+          }
+        });
+      });
+    }
+  });
+
+function renderSelectedInstructors() {
+  const div = document.getElementById("selected-instructors");
+  div.innerHTML = selectedInstructors
+    .map(
+      (i, idx) =>
+        `<span class="inline-block bg-indigo-100 text-indigo-700 px-2 py-1 rounded mr-2 mb-1">${i.name} <button class="remove-instructor" data-idx="${idx}">&times;</button></span>`,
+    )
+    .join("");
+  document.querySelectorAll(".remove-instructor").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      selectedInstructors.splice(this.getAttribute("data-idx"), 1);
+      renderSelectedInstructors();
+    });
+  });
+  document.getElementById("send-invitations-btn").disabled =
+    selectedInstructors.length === 0;
+}
+
+document
+  .getElementById("send-invitations-btn")
+  ?.addEventListener("click", async function () {
+    // Use the thesisId from window.studentThesisId set in loadStudentThesisInfo
+    const thesisId = window.studentThesisId;
+    const instructorIds = selectedInstructors.map((i) => i.id);
+    const messageDiv = document.getElementById("committee-message");
+    messageDiv.classList.add("hidden");
+    messageDiv.textContent = "";
+
+    try {
+      const res = await fetch("/student/api/student/committee/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ thesisId, instructorIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        messageDiv.textContent = "Invitations sent!";
+        messageDiv.classList.remove("hidden", "text-red-600");
+        messageDiv.classList.add("text-green-600");
+        selectedInstructors = [];
+        renderSelectedInstructors();
+      } else {
+        messageDiv.textContent = data.message || "Failed to send invitations.";
+        messageDiv.classList.remove("hidden", "text-green-600");
+        messageDiv.classList.add("text-red-600");
+      }
+    } catch (err) {
+      messageDiv.textContent = "Server error. Please try again.";
+      messageDiv.classList.remove("hidden", "text-green-600");
+      messageDiv.classList.add("text-red-600");
+    }
+  });
 
 // Initialize event listeners when the DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {

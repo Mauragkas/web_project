@@ -1,6 +1,7 @@
 const path = require("path");
 const thesisService = require("./thesisService");
 const studentService = require("./studentService");
+const { findInstructors } = require("../db/database");
 
 class InstructorService {
   async processNewTopic(instructorId, title, description, file) {
@@ -37,6 +38,10 @@ class InstructorService {
 
   async getAllThesesForInstructor(instructorId, filters) {
     return thesisService.getThesesForInstructor(instructorId, filters);
+  }
+
+  async getAllInstructors(query) {
+    return findInstructors(query || "");
   }
 
   async processTopicUpdate(topicId, instructorId, updatedData, file) {

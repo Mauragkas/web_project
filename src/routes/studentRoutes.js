@@ -16,4 +16,18 @@ router.get(
   studentController.getDashboardData,
 );
 
+// API: Search instructors for committee selection
+router.get(
+  "/api/student/committee/instructors",
+  authMiddleware("student"),
+  studentController.searchInstructors,
+);
+
+// API: Invite committee members
+router.post(
+  "/api/student/committee/invite",
+  authMiddleware("student"),
+  studentController.inviteCommitteeMembers,
+);
+
 module.exports = router;
