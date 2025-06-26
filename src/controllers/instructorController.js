@@ -1,5 +1,6 @@
 const instructorService = require("../services/instructorService");
 const studentService = require("../services/studentService");
+const { Parser } = require("json2csv");
 
 class InstructorController {
   async createTopic(req, res) {
@@ -230,6 +231,55 @@ class InstructorController {
       }
     } catch (error) {
       console.error("Cancel assignment error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+
+  async getThesesList(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const { status, role, format } = req.query;
+      const filters = {};
+      if (status) filters.status = status;
+      if (role) filters.role = role;
+
+      const theses = await instructorService.getAllThesesForInstructor(
+        instructorId,
+        filters,
+      );
+
+      if (format === "csv") {
+        // Convert to CSV
+        const fields = [
+          { label: "Thesis ID", value: "thesis_id" },
+          { label: "Topic Title", value: "topic_title" },
+          { label: "Student Name", value: "student_name" },
+          { label: "Supervisor Name", value: "supervisor_name" },
+          { label: "Committee Members", value: "committee_members" },
+          { label: "Status", value: "status" },
+          { label: "Assigned Date", value: "assigned_date" },
+          { label: "Completion Date", value: "completion_date" },
+          { label: "Grade", value: "grade" },
+          { label: "AP Number", value: "ap_number" },
+          { label: "Library Link", value: "library_link" },
+          { label: "Role", value: "instructor_role" },
+        ];
+        const parser = new Parser({ fields });
+        const csv = parser.parse(theses);
+
+        res.header("Content-Type", "text/csv");
+        res.attachment("theses.csv");
+        return res.send(csv);
+      } else if (format === "json") {
+        res.header("Content-Type", "application/json");
+        res.attachment("theses.json");
+        return res.send(JSON.stringify(theses, null, 2));
+      } else {
+        // Default: JSON API
+        return res.json({ success: true, theses });
+      }
+    } catch (error) {
+      console.error("Get theses list error:", error);
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }

@@ -452,6 +452,73 @@ async function loadInstructorTopics() {
   }
 }
 
+// ---- Instructor Theses List ----
+async function loadInstructorTheses() {
+  const listDiv = document.getElementById("instructor-theses-list");
+  if (!listDiv) return;
+
+  // Get filter values
+  const status = document.getElementById("thesis-status-filter")?.value || "";
+  const role = document.getElementById("thesis-role-filter")?.value || "";
+
+  let url = "/instructor/api/instructor/theses";
+  const params = [];
+  if (status) params.push(`status=${encodeURIComponent(status)}`);
+  if (role) params.push(`role=${encodeURIComponent(role)}`);
+  if (params.length) url += "?" + params.join("&");
+
+  listDiv.innerHTML = `<div class="text-gray-500 text-center">Loading theses...</div>`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.success) {
+      listDiv.innerHTML = `<div class="text-red-500 text-center">Failed to load theses.</div>`;
+      return;
+    }
+    if (!data.theses.length) {
+      listDiv.innerHTML = `<div class="text-gray-500 text-center">No theses found.</div>`;
+      return;
+    }
+    listDiv.innerHTML = data.theses
+      .map(
+        (thesis) => `
+      <div class="bg-white bg-opacity-60 p-3 rounded-md mb-2 flex flex-col md:flex-row justify-between items-start md:items-center border-l-4 ${
+        thesis.status === "Completed"
+          ? "border-green-500"
+          : thesis.status === "Cancelled"
+            ? "border-red-500"
+            : "border-indigo-500"
+      }">
+        <div>
+          <p class="font-semibold">${thesis.topic_title}</p>
+          <p class="text-sm text-gray-500">Student: ${thesis.student_name}</p>
+          <p class="text-sm text-gray-500">Status: ${thesis.status}</p>
+          <p class="text-xs text-gray-400">Assigned: ${thesis.assigned_date ? new Date(thesis.assigned_date).toLocaleDateString() : "-"}</p>
+          <p class="text-xs text-gray-400">Role: ${capitalizeFirstLetter(thesis.instructor_role || (thesis.supervisor_id == window.currentUserId ? "supervisor" : "committee"))}</p>
+        </div>
+        <div class="mt-2 md:mt-0">
+          <button class="text-sm text-indigo-600 hover:underline mr-2 view-thesis-details-btn" data-thesis-id="${thesis.thesis_id}">
+            View Details
+          </button>
+        </div>
+      </div>
+    `,
+      )
+      .join("");
+
+    // Attach event listeners for "View Details" if needed
+    document.querySelectorAll(".view-thesis-details-btn").forEach((btn) => {
+      btn.addEventListener("click", function () {
+        // You can implement a modal or redirect to a details page
+        alert("Thesis details for ID: " + btn.getAttribute("data-thesis-id"));
+      });
+    });
+  } catch (err) {
+    listDiv.innerHTML = `<div class="text-red-500 text-center">Server error loading theses.</div>`;
+  }
+}
+
 // ---- Session validity check for dashboard protection ----
 function checkSessionValidity() {
   // Make a lightweight request to check session
@@ -493,6 +560,28 @@ function checkSessionValidity() {
       console.error("Session check failed:", error);
       // On error, safest to redirect to login
       window.location.href = "/auth/login";
+    });
+}
+
+// ---- Download file helper ----
+function downloadFile(url, filename) {
+  fetch(url, {
+    credentials: "include",
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error("Network error");
+      return response.blob();
+    })
+    .then((blob) => {
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    })
+    .catch((err) => {
+      alert("Failed to export: " + err.message);
     });
 }
 
@@ -615,6 +704,48 @@ document.addEventListener("DOMContentLoaded", function () {
   // Load instructor topics if on instructor dashboard
   if (window.location.pathname === "/instructor/dashboard") {
     loadInstructorTopics();
+  }
+
+  // ---- Instructor Theses List: Load and filter ----
+  if (window.location.pathname === "/instructor/dashboard") {
+    // Load on page load
+    loadInstructorTheses();
+
+    // Attach filter events
+    const statusFilter = document.getElementById("thesis-status-filter");
+    const roleFilter = document.getElementById("thesis-role-filter");
+    if (statusFilter)
+      statusFilter.addEventListener("change", loadInstructorTheses);
+    if (roleFilter) roleFilter.addEventListener("change", loadInstructorTheses);
+
+    // Export CSV
+    const exportCsvBtn = document.getElementById("export-theses-csv");
+    if (exportCsvBtn) {
+      exportCsvBtn.addEventListener("click", function () {
+        // Get current filters
+        const status =
+          document.getElementById("thesis-status-filter")?.value || "";
+        const role = document.getElementById("thesis-role-filter")?.value || "";
+        let url = "/instructor/api/instructor/theses?format=csv";
+        if (status) url += `&status=${encodeURIComponent(status)}`;
+        if (role) url += `&role=${encodeURIComponent(role)}`;
+        downloadFile(url, "theses.csv");
+      });
+    }
+
+    // Export JSON
+    const exportJsonBtn = document.getElementById("export-theses-json");
+    if (exportJsonBtn) {
+      exportJsonBtn.addEventListener("click", function () {
+        const status =
+          document.getElementById("thesis-status-filter")?.value || "";
+        const role = document.getElementById("thesis-role-filter")?.value || "";
+        let url = "/instructor/api/instructor/theses?format=json";
+        if (status) url += `&status=${encodeURIComponent(status)}`;
+        if (role) url += `&role=${encodeURIComponent(role)}`;
+        downloadFile(url, "theses.json");
+      });
+    }
   }
 
   // ---- Instructor Topics Edit Modal Functionality ----

@@ -35,6 +35,10 @@ class InstructorService {
     return thesisService.deleteThesisTopic(topicId, instructorId);
   }
 
+  async getAllThesesForInstructor(instructorId, filters) {
+    return thesisService.getThesesForInstructor(instructorId, filters);
+  }
+
   async processTopicUpdate(topicId, instructorId, updatedData, file) {
     let documentPath = updatedData.existingDocumentPath || null;
     if (file) {

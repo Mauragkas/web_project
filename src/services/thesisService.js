@@ -169,6 +169,73 @@ class ThesisService {
       throw error;
     }
   }
+  /**
+   * Get all theses where the instructor is supervisor or committee member.
+   * @param {number} instructorId
+   * @param {object} filters - { status, role }
+   * @returns {Promise<Array>}
+   */
+  async getThesesForInstructor(instructorId, filters = {}) {
+    let params = [instructorId, instructorId];
+    let whereClauses = ["(t.supervisor_id = ? OR cm.instructor_id = ?)"];
+
+    if (filters.status) {
+      whereClauses.push("t.status = ?");
+      params.push(filters.status);
+    }
+
+    if (filters.role === "supervisor") {
+      whereClauses = ["t.supervisor_id = ?"];
+      params = [instructorId];
+      if (filters.status) {
+        whereClauses.push("t.status = ?");
+        params.push(filters.status);
+      }
+    } else if (filters.role === "committee") {
+      whereClauses = ["cm.instructor_id = ?"];
+      params = [instructorId];
+      if (filters.status) {
+        whereClauses.push("t.status = ?");
+        params.push(filters.status);
+      }
+    }
+
+    const query = `
+        SELECT
+          t.id as thesis_id,
+          t.topic_id,
+          t.student_id,
+          t.supervisor_id,
+          t.status,
+          t.assigned_date,
+          t.completion_date,
+          t.grade,
+          t.ap_number,
+          t.library_link,
+          tt.title as topic_title,
+          u.full_name as student_name,
+          s.full_name as supervisor_name,
+          GROUP_CONCAT(cm2.full_name, ', ') as committee_members,
+          CASE
+            WHEN t.supervisor_id = ? THEN 'supervisor'
+            WHEN cm.instructor_id = ? THEN 'committee'
+            ELSE NULL
+          END as instructor_role
+        FROM theses t
+        JOIN thesis_topics tt ON t.topic_id = tt.id
+        JOIN users u ON t.student_id = u.id
+        JOIN users s ON t.supervisor_id = s.id
+        LEFT JOIN committee_members cm ON cm.thesis_id = t.id
+        LEFT JOIN users cm2 ON cm2.id = cm.instructor_id
+        WHERE ${whereClauses.join(" AND ")}
+        GROUP BY t.id
+        ORDER BY t.assigned_date DESC
+      `;
+
+    // For role-specific queries, instructor_id is used twice for CASE
+    const caseParams = [instructorId, instructorId];
+    return executeQuery(query, [...caseParams, ...params]);
+  }
 }
 
 module.exports = new ThesisService();

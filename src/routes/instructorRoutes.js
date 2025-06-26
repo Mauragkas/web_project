@@ -105,4 +105,11 @@ router.post(
   instructorController.cancelAssignment,
 );
 
+// API: Get all theses for instructor (with filters)
+router.get(
+  "/api/instructor/theses",
+  authMiddleware("instructor"),
+  instructorController.getThesesList,
+);
+
 module.exports = router;
