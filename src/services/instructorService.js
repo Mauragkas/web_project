@@ -21,6 +21,33 @@ class InstructorService {
       return { success: false, message: error.message };
     }
   }
+
+  async getThesisTopicDetails(topicId, instructorId) {
+    return thesisService.retrieveThesisTopic(topicId, instructorId);
+  }
+
+  async getTopicsByInstructor(instructorId) {
+    return thesisService.getTopicsByInstructor(instructorId);
+  }
+
+  async deleteTopic(topicId, instructorId) {
+    return thesisService.deleteThesisTopic(topicId, instructorId);
+  }
+
+  async processTopicUpdate(topicId, instructorId, updatedData, file) {
+    let documentPath = updatedData.existingDocumentPath || null;
+    if (file) {
+      documentPath = "/uploads/topics/" + file.filename;
+    }
+    const result = await thesisService.updateThesisTopic(
+      topicId,
+      instructorId,
+      updatedData.title,
+      updatedData.description,
+      documentPath,
+    );
+    return result;
+  }
 }
 
 module.exports = new InstructorService();

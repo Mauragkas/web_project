@@ -344,6 +344,114 @@ function generateJsonFeed() {
   // Implementation would follow
 }
 
+/**
+ * Load and render instructor topics in the dashboard
+ */
+async function loadInstructorTopics() {
+  const topicsList = document.getElementById("instructor-topics-list");
+  if (!topicsList) return;
+
+  try {
+    const res = await fetch("/instructor/api/instructor/topics");
+    const data = await res.json();
+    if (!data.success) {
+      topicsList.innerHTML = `<div class="text-red-500 text-center">Failed to load topics.</div>`;
+      return;
+    }
+    if (!data.topics.length) {
+      topicsList.innerHTML = `<div class="text-gray-500 text-center">No topics found.</div>`;
+      return;
+    }
+    topicsList.innerHTML = data.topics
+      .map(
+        (topic) => `
+      <div
+        class="bg-white bg-opacity-60 p-3 rounded-md mb-2 flex justify-between items-center"
+        data-topic-id="${topic.id}"
+        data-title="${topic.title}"
+        data-description="${topic.description || ""}"
+        data-document-path="${topic.document_path || ""}"
+      >
+        <div>
+          <p class="font-semibold">${topic.title}</p>
+          <p class="text-sm text-gray-500">${topic.description || ""}</p>
+        </div>
+        <div>
+          <button class="text-sm text-indigo-600 hover:underline mr-2 edit-topic-btn">Edit</button>
+          <button class="text-sm text-red-500 hover:underline delete-topic-btn">Delete</button>
+        </div>
+      </div>
+    `,
+      )
+      .join("");
+    // Re-attach edit-topic-btn event listeners if needed
+    document.querySelectorAll(".edit-topic-btn").forEach((btn) => {
+      btn.addEventListener("click", async function () {
+        const topicDiv = btn.closest("[data-topic-id]");
+        const topicId = topicDiv.getAttribute("data-topic-id");
+
+        // Fetch topic details via AJAX
+        const res = await fetch(
+          `/instructor/api/instructor/topics/${topicId}/edit`,
+        );
+        const data = await res.json();
+        if (!data.success) {
+          alert(data.message || "Failed to load topic details.");
+          return;
+        }
+        const topic = data.topic;
+
+        // Populate modal fields
+        document.getElementById("edit-topic-id").value = topic.id;
+        document.getElementById("edit-title").value = topic.title;
+        document.getElementById("edit-description").value =
+          topic.description || "";
+        document.getElementById("edit-existing-document-path").value =
+          topic.document_path || "";
+        if (topic.document_path) {
+          document.getElementById("current-document-link").innerHTML =
+            `<a href="${topic.document_path}" target="_blank" class="text-indigo-600 underline">Current PDF</a>`;
+        } else {
+          document.getElementById("current-document-link").innerHTML =
+            "<span class='text-gray-500'>No PDF attached</span>";
+        }
+
+        // Show modal
+        document.getElementById("editTopicModal").classList.remove("hidden");
+      });
+    });
+
+    // Attach delete button handler
+    document
+      .querySelectorAll("[data-topic-id] .text-red-500")
+      .forEach((btn) => {
+        btn.addEventListener("click", async function () {
+          const topicDiv = btn.closest("[data-topic-id]");
+          const topicId = topicDiv.getAttribute("data-topic-id");
+          if (!confirm("Are you sure you want to delete this topic?")) return;
+          try {
+            const res = await fetch(
+              `/instructor/api/instructor/topics/${topicId}/delete`,
+              {
+                method: "DELETE",
+              },
+            );
+            const data = await res.json();
+            if (data.success) {
+              topicDiv.remove();
+            } else {
+              alert(data.message || "Failed to delete topic.");
+            }
+          } catch (err) {
+            alert("Server error. Please try again.");
+          }
+        });
+      });
+  } catch (err) {
+    topicsList.innerHTML = `<div class="text-red-500 text-center">Server error loading topics.</div>`;
+  }
+}
+
 // Initialize event listeners when the DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
   // Common elements across all pages
@@ -377,6 +485,14 @@ document.addEventListener("DOMContentLoaded", function () {
       userMenu.classList.add("hidden");
     }
   });
+
+  // Always attach close modal handler if modal exists
+  const closeEditModalBtn = document.getElementById("closeEditModal");
+  if (closeEditModalBtn) {
+    closeEditModalBtn.addEventListener("click", function () {
+      document.getElementById("editTopicModal").classList.add("hidden");
+    });
+  }
 
   // Page specific initializations
   const currentPath = window.location.pathname;
@@ -432,5 +548,92 @@ document.addEventListener("DOMContentLoaded", function () {
         button.addEventListener("click", showThesisDetails);
       });
     }
+  }
+
+  // Load instructor topics if on instructor dashboard
+  if (window.location.pathname === "/instructor/dashboard") {
+    loadInstructorTopics();
+  }
+
+  // ---- Instructor Topics Edit Modal Functionality ----
+  // Only run this if the edit-topic-btn exists (i.e., on topics.html for instructors)
+  if (document.querySelector(".edit-topic-btn")) {
+    // Open modal on Edit button click
+    document.querySelectorAll(".edit-topic-btn").forEach((btn) => {
+      btn.addEventListener("click", async function () {
+        const topicDiv = btn.closest("[data-topic-id]");
+        const topicId = topicDiv.getAttribute("data-topic-id");
+
+        // Fetch topic details via AJAX
+        const res = await fetch(
+          `/instructor/api/instructor/topics/${topicId}/edit`,
+        );
+        const data = await res.json();
+        if (!data.success) {
+          alert(data.message || "Failed to load topic details.");
+          return;
+        }
+        const topic = data.topic;
+
+        // Populate modal fields
+        document.getElementById("edit-topic-id").value = topic.id;
+        document.getElementById("edit-title").value = topic.title;
+        document.getElementById("edit-description").value =
+          topic.description || "";
+        document.getElementById("edit-existing-document-path").value =
+          topic.document_path || "";
+        if (topic.document_path) {
+          document.getElementById("current-document-link").innerHTML =
+            `<a href="${topic.document_path}" target="_blank" class="text-indigo-600 underline">Current PDF</a>`;
+        } else {
+          document.getElementById("current-document-link").innerHTML =
+            "<span class='text-gray-500'>No PDF attached</span>";
+        }
+
+        // Show modal
+        document.getElementById("editTopicModal").classList.remove("hidden");
+      });
+    });
+
+    // Submit edit form
+    document
+      .getElementById("editTopicForm")
+      .addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const topicId = document.getElementById("edit-topic-id").value;
+        const form = e.target;
+        const formData = new FormData(form);
+        const messageEl = document.getElementById("editTopicMessage");
+        messageEl.classList.add("hidden");
+        messageEl.textContent = "";
+
+        try {
+          const response = await fetch(
+            `/instructor/api/instructor/topics/${topicId}/update`,
+            {
+              method: "POST",
+              body: formData,
+            },
+          );
+          const data = await response.json();
+          if (data.success) {
+            messageEl.textContent = "Topic updated successfully!";
+            messageEl.classList.remove("hidden", "text-red-600");
+            messageEl.classList.add("text-green-600");
+
+            // Optionally, update the topic in the list without reload
+            // (for demo, just reload the page)
+            setTimeout(() => window.location.reload(), 1000);
+          } else {
+            messageEl.textContent = data.message || "Failed to update topic.";
+            messageEl.classList.remove("hidden", "text-green-600");
+            messageEl.classList.add("text-red-600");
+          }
+        } catch (err) {
+          messageEl.textContent = "Server error. Please try again.";
+          messageEl.classList.remove("hidden", "text-green-600");
+          messageEl.classList.add("text-red-600");
+        }
+      });
   }
 });

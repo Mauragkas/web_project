@@ -86,6 +86,30 @@ function getOne(query, params = []) {
   });
 }
 
+// Get a single thesis topic by id and instructor
+function getThesisTopicByIdAndInstructor(topicId, instructorId) {
+  return getOne(
+    "SELECT * FROM thesis_topics WHERE id = ? AND instructor_id = ?",
+    [topicId, instructorId],
+  );
+}
+
+// Update a thesis topic
+function updateThesisTopic(
+  topicId,
+  instructorId,
+  title,
+  description,
+  documentPath,
+) {
+  return executeRun(
+    `UPDATE thesis_topics
+     SET title = ?, description = ?, document_path = ?
+     WHERE id = ? AND instructor_id = ?`,
+    [title, description, documentPath, topicId, instructorId],
+  );
+}
+
 module.exports = {
   executeQuery,
   executeRun,
@@ -102,4 +126,6 @@ module.exports = {
       });
     });
   },
+  getThesisTopicByIdAndInstructor,
+  updateThesisTopic,
 };

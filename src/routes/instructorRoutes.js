@@ -42,4 +42,31 @@ router.post(
   instructorController.createTopic,
 );
 
+// Get topic details for editing
+router.get(
+  "/api/instructor/topics/:topicId/edit",
+  authMiddleware("instructor"),
+  instructorController.getTopicDetailsForEdit,
+);
+
+// Update topic (with optional file upload)
+router.post(
+  "/api/instructor/topics/:topicId/update",
+  authMiddleware("instructor"),
+  upload.single("document"),
+  instructorController.updateTopic,
+);
+
+router.get(
+  "/api/instructor/topics",
+  authMiddleware("instructor"),
+  instructorController.getMyTopics,
+);
+
+// API: Delete topic
+router.delete(
+  "/api/instructor/topics/:topicId/delete",
+  authMiddleware("instructor"),
+  instructorController.deleteTopic,
+);
 module.exports = router;
