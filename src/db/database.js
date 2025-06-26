@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const fs = require("fs");
 
 const dbPath = path.join(__dirname, "../../database/thesis.sqlite");
+const schemaPath = path.join(__dirname, "../../database/schemas.sql");
 
 // Ensure database directory exists
 const dbDir = path.dirname(dbPath);
@@ -20,60 +21,15 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
-// Initialize database with additional tables needed for assignments
+// Initialize database by executing schema from file
 function initializeDatabase() {
-  db.serialize(() => {
-    // Create users table if it doesn't exist
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            role TEXT NOT NULL,
-            email TEXT UNIQUE,
-            full_name TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )`);
-
-    // Create thesis_topics table if it doesn't exist
-    db.run(`CREATE TABLE IF NOT EXISTS thesis_topics (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            instructor_id INTEGER NOT NULL,
-            title TEXT NOT NULL,
-            description TEXT,
-            document_path TEXT,
-            status TEXT DEFAULT 'Available',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (instructor_id) REFERENCES users(id)
-        )`);
-
-    // Create theses table for assignments
-    db.run(`CREATE TABLE IF NOT EXISTS theses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            topic_id INTEGER NOT NULL,
-            student_id INTEGER NOT NULL,
-            supervisor_id INTEGER NOT NULL,
-            status TEXT DEFAULT 'Under Assignment',
-            assigned_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            completion_date TIMESTAMP,
-            grade TEXT,
-            ap_number TEXT,
-            library_link TEXT,
-            FOREIGN KEY (topic_id) REFERENCES thesis_topics(id),
-            FOREIGN KEY (student_id) REFERENCES users(id),
-            FOREIGN KEY (supervisor_id) REFERENCES users(id)
-        )`);
-
-    // Create committee_members table
-    db.run(`CREATE TABLE IF NOT EXISTS committee_members (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            thesis_id INTEGER NOT NULL,
-            instructor_id INTEGER NOT NULL,
-            status TEXT DEFAULT 'Invited',
-            invitation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            response_date TIMESTAMP,
-            FOREIGN KEY (thesis_id) REFERENCES theses(id),
-            FOREIGN KEY (instructor_id) REFERENCES users(id)
-        )`);
+  const schema = fs.readFileSync(schemaPath, "utf8");
+  db.exec(schema, (err) => {
+    if (err) {
+      console.error("Error initializing database schema:", err.message);
+    } else {
+      console.log("Database schema initialized.");
+    }
   });
 }
 
