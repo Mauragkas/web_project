@@ -636,7 +636,7 @@ function downloadFile(url, filename) {
     });
 }
 
-// ---- Student Thesis Info AJAX (added as per prompt) ----
+// --- Student Thesis Info AJAX ---
 async function loadStudentThesisInfo() {
   // Only run on student dashboard
   if (!window.location.pathname.startsWith("/student/dashboard")) return;
@@ -659,6 +659,16 @@ async function loadStudentThesisInfo() {
 
     if (!data.thesis) {
       detailsDiv.innerHTML = `<div class="text-gray-500">No thesis assigned yet.</div>`;
+
+      // Hide committee selection if no thesis
+      const committeeSection = document.getElementById("committee-selection");
+      if (committeeSection) {
+        committeeSection.innerHTML = `
+          <div class="p-4 bg-yellow-100 text-yellow-800 rounded-md">
+            You must have a thesis assigned before inviting committee members.
+          </div>
+        `;
+      }
       return;
     }
 
@@ -693,9 +703,27 @@ async function loadStudentThesisInfo() {
       }</p>
     `;
 
-    // --- Committee selection logic ---
-    // Store thesisId for invitation use
-    window.studentThesisId = thesis.id;
+    // Store thesisId for invitation use - CRITICAL FIX
+    window.studentThesisId = thesis.thesis_id; // Note: this should match what your API returns
+
+    // Only show committee selection if thesis is in Under Assignment status
+    if (thesis.status === "Under Assignment") {
+      const committeeSection = document.getElementById("committee-selection");
+      if (committeeSection) {
+        committeeSection.classList.remove("hidden");
+      }
+    } else {
+      // Hide committee selection if thesis is not in Under Assignment status
+      const committeeSection = document.getElementById("committee-selection");
+      if (committeeSection) {
+        committeeSection.innerHTML = `
+          <div class="p-4 bg-blue-100 text-blue-800 rounded-md">
+            Committee selection is only available when thesis is in "Under Assignment" status.
+            Current status: ${thesis.status}
+          </div>
+        `;
+      }
+    }
   } catch (err) {
     detailsDiv.innerHTML = `<div class="text-red-500">Server error loading thesis info.</div>`;
   }
@@ -758,8 +786,17 @@ function renderSelectedInstructors() {
 document
   .getElementById("send-invitations-btn")
   ?.addEventListener("click", async function () {
-    // Use the thesisId from window.studentThesisId set in loadStudentThesisInfo
+    // FIXED: Check if thesisId exists before sending request
     const thesisId = window.studentThesisId;
+    if (!thesisId) {
+      const messageDiv = document.getElementById("committee-message");
+      messageDiv.classList.remove("hidden", "text-green-600");
+      messageDiv.classList.add("text-red-600");
+      messageDiv.textContent =
+        "Error: No thesis found. Please contact support.";
+      return;
+    }
+
     const instructorIds = selectedInstructors.map((i) => i.id);
     const messageDiv = document.getElementById("committee-message");
     messageDiv.classList.add("hidden");

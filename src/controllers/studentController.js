@@ -20,6 +20,7 @@ class StudentController {
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }
+
   async searchInstructors(req, res) {
     try {
       const query = req.query.query || "";
@@ -36,12 +37,38 @@ class StudentController {
       const studentId = req.session.userId;
       const { thesisId, instructorIds } = req.body;
 
-      // Validate: thesisId belongs to student and is Under Assignment
-      // (You can add a check here if needed)
+      // FIXED: Validate thesisId exists and belongs to this student
+      if (!thesisId) {
+        return res.status(400).json({
+          success: false,
+          message: "Thesis ID is required",
+        });
+      }
+
+      // Check if thesis belongs to this student
+      const thesisBelongsToStudent =
+        await studentService.verifyThesisBelongsToStudent(thesisId, studentId);
+
+      if (!thesisBelongsToStudent) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "You don't have permission to invite committee members for this thesis",
+        });
+      }
+
+      // Validate: instructorIds is an array and not empty
+      if (!Array.isArray(instructorIds) || instructorIds.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "No instructors selected",
+        });
+      }
 
       await studentService.processCommitteeInvitations(thesisId, instructorIds);
       res.json({ success: true, message: "Invitations sent" });
     } catch (error) {
+      console.error("Error inviting committee members:", error);
       res.status(400).json({ success: false, message: error.message });
     }
   }

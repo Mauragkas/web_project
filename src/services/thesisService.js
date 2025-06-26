@@ -239,10 +239,62 @@ class ThesisService {
     const caseParams = [instructorId, instructorId];
     return executeQuery(query, [...caseParams, ...params]);
   }
+
   async createCommitteeInvitations(thesisId, instructorIds) {
+    // Verify thesisId is valid
+    if (!thesisId) {
+      throw new Error("Thesis ID is required");
+    }
+
+    // Verify thesis exists and get supervisor
+    const thesis = await getOne(
+      "SELECT id, status, supervisor_id FROM theses WHERE id = ?",
+      [thesisId],
+    );
+
+    if (!thesis) {
+      throw new Error("Thesis not found");
+    }
+
+    // Only allow invitations for Under Assignment theses
+    if (thesis.status !== "Under Assignment") {
+      throw new Error(
+        `Cannot invite committee members for thesis with status: ${thesis.status}`,
+      );
+    }
+
+    // Check if any instructorId is the supervisor
+    if (instructorIds.includes(thesis.supervisor_id.toString())) {
+      throw new Error(
+        "Cannot invite the thesis supervisor as committee member",
+      );
+    }
+
+    // Check for duplicate invitations
+    const existingInvitations = await executeQuery(
+      `SELECT instructor_id FROM committee_members
+       WHERE thesis_id = ?`,
+      [thesisId],
+    );
+
+    const existingInstructorIds = existingInvitations.map((inv) =>
+      inv.instructor_id.toString(),
+    );
+
+    // Find duplicates
+    const duplicates = instructorIds.filter((id) =>
+      existingInstructorIds.includes(id.toString()),
+    );
+
+    if (duplicates.length > 0) {
+      throw new Error(
+        "Some instructors have already been invited to this committee",
+      );
+    }
+
     // Insert invitations
     await insertCommitteeInvitations(thesisId, instructorIds);
-    // Optionally: return the inserted rows or just success
+
     return { success: true };
   }
 

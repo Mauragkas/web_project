@@ -69,11 +69,35 @@ class StudentService {
     );
     return thesis;
   }
+
+  /**
+   * Verify a thesis belongs to a student
+   * @param {number} thesisId
+   * @param {number} studentId
+   * @returns {Promise<boolean>}
+   */
+  async verifyThesisBelongsToStudent(thesisId, studentId) {
+    const thesis = await getOne(
+      "SELECT id FROM theses WHERE id = ? AND student_id = ?",
+      [thesisId, studentId],
+    );
+    return !!thesis; // Return true if thesis exists and belongs to student
+  }
+
   async processCommitteeInvitations(thesisId, instructorIds) {
     // Validate: instructorIds is array, thesisId belongs to student, etc.
     if (!Array.isArray(instructorIds) || instructorIds.length === 0) {
       throw new Error("No instructors selected");
     }
+
+    // FIXED: Verify thesis exists before attempting to create invitations
+    const thesis = await getOne("SELECT id FROM theses WHERE id = ?", [
+      thesisId,
+    ]);
+    if (!thesis) {
+      throw new Error("Thesis not found");
+    }
+
     // Insert invitations
     await thesisService.createCommitteeInvitations(thesisId, instructorIds);
     return { success: true };
