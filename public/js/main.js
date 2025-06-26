@@ -636,6 +636,67 @@ function downloadFile(url, filename) {
     });
 }
 
+// ---- Student Thesis Info AJAX (added as per prompt) ----
+async function loadStudentThesisInfo() {
+  // Only run on student dashboard
+  if (!window.location.pathname.startsWith("/student/dashboard")) return;
+
+  const section = document.getElementById("view-topic-section");
+  if (!section) return;
+
+  const detailsDiv = section.querySelector(".mt-4");
+  if (!detailsDiv) return;
+  detailsDiv.innerHTML = `<div class="text-gray-500">Loading thesis info...</div>`;
+
+  try {
+    const res = await fetch("/student/api/student/dashboard");
+    const data = await res.json();
+
+    if (!data.success) {
+      detailsDiv.innerHTML = `<div class="text-red-500">Failed to load thesis info.</div>`;
+      return;
+    }
+
+    if (!data.thesis) {
+      detailsDiv.innerHTML = `<div class="text-gray-500">No thesis assigned yet.</div>`;
+      return;
+    }
+
+    const thesis = data.thesis;
+    detailsDiv.innerHTML = `
+      <p><span class="font-semibold">Topic:</span> ${thesis.topic_title || "-"}</p>
+      <p><span class="font-semibold">Description:</span> ${thesis.topic_description || "-"}</p>
+      <p><span class="font-semibold">Attached File:</span> ${
+        thesis.topic_document_path
+          ? `<a href="${thesis.topic_document_path}" target="_blank" class="text-indigo-600 underline">PDF</a>`
+          : "No file"
+      }</p>
+      <p><span class="font-semibold">Current Status:</span> ${thesis.status || "-"}</p>
+      <p><span class="font-semibold">Supervisor:</span> ${thesis.supervisor_name || "-"} (${thesis.supervisor_email || "-"})</p>
+      <p><span class="font-semibold">Committee Members:</span> ${thesis.committee_members || "-"}</p>
+      <p><span class="font-semibold">Assigned Date:</span> ${
+        thesis.assigned_date
+          ? new Date(thesis.assigned_date).toLocaleDateString()
+          : "-"
+      }</p>
+      <p><span class="font-semibold">Completion Date:</span> ${
+        thesis.completion_date
+          ? new Date(thesis.completion_date).toLocaleDateString()
+          : "-"
+      }</p>
+      <p><span class="font-semibold">Grade:</span> ${thesis.grade || "-"}</p>
+      <p><span class="font-semibold">AP Number:</span> ${thesis.ap_number || "-"}</p>
+      <p><span class="font-semibold">Library Link:</span> ${
+        thesis.library_link
+          ? `<a href="${thesis.library_link}" target="_blank" class="text-indigo-600 underline">Nemertis</a>`
+          : "-"
+      }</p>
+    `;
+  } catch (err) {
+    detailsDiv.innerHTML = `<div class="text-red-500">Server error loading thesis info.</div>`;
+  }
+}
+
 // Initialize event listeners when the DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
   // ---- Dashboard session protection ----
@@ -751,6 +812,9 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   }
+
+  // ---- Student Thesis Info AJAX: call on DOMContentLoaded if on student dashboard ----
+  loadStudentThesisInfo();
 
   // Load instructor topics if on instructor dashboard
   if (window.location.pathname === "/instructor/dashboard") {
