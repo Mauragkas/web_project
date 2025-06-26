@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Create Thesis Topic</title>
+        <link rel="stylesheet" href="/css/style.css" />
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
+            <h2 class="text-2xl font-bold mb-6 text-center">
+                Create Thesis Topic
+            </h2>
+            <form
+                id="createTopicForm"
+                enctype="multipart/form-data"
+                class="space-y-6"
+            >
+                <div>
+                    <label for="title" class="block font-semibold mb-1"
+                        >Title</label
+                    >
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        required
+                        class="form-input"
+                    />
+                </div>
+                <div>
+                    <label for="description" class="block font-semibold mb-1"
+                        >Description</label
+                    >
+                    <textarea
+                        id="description"
+                        name="description"
+                        required
+                        class="form-input"
+                        rows="4"
+                    ></textarea>
+                </div>
+                <div>
+                    <label for="document" class="block font-semibold mb-1"
+                        >Attach PDF (optional)</label
+                    >
+                    <input
+                        type="file"
+                        id="document"
+                        name="document"
+                        accept="application/pdf"
+                        class="form-input"
+                    />
+                </div>
+                <div
+                    id="topicMessage"
+                    class="text-center text-sm font-medium hidden"
+                ></div>
+                <button type="submit" class="btn btn-primary w-full">
+                    Create Topic
+                </button>
+            </form>
+            <div class="mt-4 text-center">
+                <a
+                    href="/instructor/dashboard"
+                    class="text-indigo-600 hover:underline"
+                    >Back to Dashboard</a
+                >
+            </div>
+        </div>
+        <script>
+            document
+                .getElementById("createTopicForm")
+                .addEventListener("submit", async function (e) {
+                    e.preventDefault();
+                    const form = e.target;
+                    const formData = new FormData(form);
+                    const messageEl = document.getElementById("topicMessage");
+                    messageEl.classList.add("hidden");
+                    messageEl.textContent = "";
+
+                    try {
+                        const response = await fetch(
+                            "/instructor/api/instructor/topics/create",
+                            {
+                                method: "POST",
+                                body: formData,
+                            },
+                        );
+                        const data = await response.json();
+                        if (data.success) {
+                            messageEl.textContent =
+                                "Topic created successfully!";
+                            messageEl.classList.remove(
+                                "hidden",
+                                "text-red-600",
+                            );
+                            messageEl.classList.add("text-green-600");
+                            form.reset();
+                        } else {
+                            messageEl.textContent =
+                                data.message || "Failed to create topic.";
+                            messageEl.classList.remove(
+                                "hidden",
+                                "text-green-600",
+                            );
+                            messageEl.classList.add("text-red-600");
+                        }
+                    } catch (err) {
+                        messageEl.textContent =
+                            "Server error. Please try again.";
+                        messageEl.classList.remove("hidden", "text-green-600");
+                        messageEl.classList.add("text-red-600");
+                    }
+                });
+        </script>
+    </body>
+</html>
