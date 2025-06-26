@@ -170,6 +170,58 @@ function updateThesisTopic(
   );
 }
 
+function getCommitteeInvitationsForInstructor(instructorId) {
+  const query = `
+    SELECT
+      cm.id as invitation_id,
+      cm.status as invitation_status,
+      cm.invitation_date,
+      cm.response_date,
+      t.id as thesis_id,
+      t.status as thesis_status,
+      t.assigned_date,
+      tt.title as topic_title,
+      u.full_name as student_name,
+      s.full_name as supervisor_name
+    FROM committee_members cm
+    JOIN theses t ON cm.thesis_id = t.id
+    JOIN thesis_topics tt ON t.topic_id = tt.id
+    JOIN users u ON t.student_id = u.id
+    JOIN users s ON t.supervisor_id = s.id
+    WHERE cm.instructor_id = ?
+    ORDER BY cm.invitation_date DESC
+  `;
+  return executeQuery(query, [instructorId]);
+}
+
+// Get a single invitation by id and instructor
+function getCommitteeInvitationById(invitationId, instructorId) {
+  const query = `
+    SELECT * FROM committee_members
+    WHERE id = ? AND instructor_id = ?
+    LIMIT 1
+  `;
+  return getOne(query, [invitationId, instructorId]);
+}
+
+// Update invitation status (accept/reject)
+function updateCommitteeInvitationStatus(invitationId, instructorId, status) {
+  const query = `
+    UPDATE committee_members
+    SET status = ?, response_date = CURRENT_TIMESTAMP
+    WHERE id = ? AND instructor_id = ?
+  `;
+  return executeRun(query, [status, invitationId, instructorId]);
+}
+
+// Count accepted invitations for a thesis
+function countAcceptedCommitteeMembers(thesisId) {
+  return getOne(
+    `SELECT COUNT(*) as acceptedCount FROM committee_members WHERE thesis_id = ? AND status = 'Accepted'`,
+    [thesisId],
+  );
+}
+
 module.exports = {
   executeQuery,
   executeRun,
@@ -193,4 +245,8 @@ module.exports = {
   insertCommitteeInvitations,
   countAcceptedCommittee,
   updateThesisStatus,
+  getCommitteeInvitationsForInstructor,
+  getCommitteeInvitationById,
+  updateCommitteeInvitationStatus,
+  countAcceptedCommitteeMembers,
 };

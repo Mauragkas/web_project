@@ -118,4 +118,18 @@ router.get(
   instructorController.getThesisDetails,
 );
 
+// API: Get committee invitations
+router.get(
+  "/api/instructor/committee-invitations",
+  authMiddleware("instructor"),
+  instructorController.getCommitteeInvitations,
+);
+
+// API: Respond to invitation (accept/reject)
+router.post(
+  "/api/instructor/committee-invitations/:invitationId/respond",
+  authMiddleware("instructor"),
+  instructorController.respondToCommitteeInvitation,
+);
+
 module.exports = router;

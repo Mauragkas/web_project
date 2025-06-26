@@ -1,7 +1,15 @@
 const path = require("path");
 const thesisService = require("./thesisService");
 const studentService = require("./studentService");
-const { findInstructors, executeQuery } = require("../db/database");
+const {
+  findInstructors,
+  executeQuery,
+  getCommitteeInvitationsForInstructor,
+  getCommitteeInvitationById,
+  updateCommitteeInvitationStatus,
+  countAcceptedCommitteeMembers,
+  updateThesisStatus,
+} = require("../db/database");
 
 class InstructorService {
   async processNewTopic(instructorId, title, description, file) {
@@ -42,6 +50,10 @@ class InstructorService {
 
   async getAllInstructors(query) {
     return findInstructors(query || "");
+  }
+
+  async getCommitteeInvitations(instructorId) {
+    return getCommitteeInvitationsForInstructor(instructorId);
   }
 
   async processTopicUpdate(topicId, instructorId, updatedData, file) {
@@ -207,6 +219,46 @@ class InstructorService {
       instructorId,
     ]);
     return rows[0] || null;
+  }
+  async respondToCommitteeInvitation(instructorId, invitationId, action) {
+    // Validate action
+    if (!["Accepted", "Rejected"].includes(action)) {
+      return { success: false, message: "Invalid action" };
+    }
+
+    // Get invitation and check ownership
+    const invitation = await getCommitteeInvitationById(
+      invitationId,
+      instructorId,
+    );
+    if (!invitation) {
+      return { success: false, message: "Invitation not found" };
+    }
+    if (invitation.status !== "Invited") {
+      return { success: false, message: "Invitation already responded to" };
+    }
+
+    // Update invitation status
+    await updateCommitteeInvitationStatus(invitationId, instructorId, action);
+
+    // If accepted, check if enough members have accepted to activate thesis
+    let thesisFinalized = false;
+    if (action === "Accepted") {
+      const { acceptedCount } = await countAcceptedCommitteeMembers(
+        invitation.thesis_id,
+      );
+      if (acceptedCount >= 2) {
+        // Activate thesis
+        await updateThesisStatus(invitation.thesis_id, "Active");
+        thesisFinalized = true;
+      }
+    }
+
+    return {
+      success: true,
+      message: `Invitation ${action.toLowerCase()} successfully`,
+      thesisFinalized,
+    };
   }
 }
 

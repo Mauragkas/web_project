@@ -294,16 +294,57 @@ class InstructorController {
         instructorId,
       );
       if (!thesis) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            message: "Thesis not found or access denied",
-          });
+        return res.status(404).json({
+          success: false,
+          message: "Thesis not found or access denied",
+        });
       }
       return res.json({ success: true, thesis });
     } catch (error) {
       console.error("Get thesis details error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+  // GET: List of committee invitations for instructor
+  async getCommitteeInvitations(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const invitations =
+        await instructorService.getCommitteeInvitations(instructorId);
+      return res.json({ success: true, invitations });
+    } catch (error) {
+      console.error("Get committee invitations error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+
+  // POST: Respond to invitation (accept/reject)
+  async respondToCommitteeInvitation(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const invitationId = req.params.invitationId;
+      const { action } = req.body; // "Accepted" or "Rejected"
+
+      const result = await instructorService.respondToCommitteeInvitation(
+        instructorId,
+        invitationId,
+        action,
+      );
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: result.message,
+          thesisFinalized: result.thesisFinalized || false,
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: result.message,
+        });
+      }
+    } catch (error) {
+      console.error("Respond to invitation error:", error);
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }
