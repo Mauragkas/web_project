@@ -9,6 +9,16 @@ function authMiddleware(requiredRole) {
   return (req, res, next) => {
     // Check if user is logged in
     if (!req.session || !req.session.userId) {
+      // If it's an AJAX request, return a JSON response
+      if (req.xhr || req.headers.accept.indexOf("json") > -1) {
+        return res.status(401).json({
+          success: false,
+          message: "Authentication required",
+          redirect: "/auth/login",
+        });
+      }
+
+      // For regular page requests, redirect to login
       return res.redirect("/auth/login");
     }
 
@@ -26,7 +36,16 @@ function authMiddleware(requiredRole) {
       : userRole === requiredRole;
 
     if (!hasRequiredRole) {
-      // Instead of 403, return a 404 page
+      // For AJAX requests, return JSON
+      if (req.xhr || req.headers.accept.indexOf("json") > -1) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied",
+          redirect: "/public/announcements",
+        });
+      }
+
+      // For regular requests, show 404
       return res
         .status(404)
         .sendFile(path.join(__dirname, "../views/404.html"));

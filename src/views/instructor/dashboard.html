@@ -381,6 +381,18 @@
                 ?.addEventListener("click", function () {
                     window.location.href = "/instructor/topics";
                 });
+            // Check session validity immediately and when tab becomes visible
+            document.addEventListener("DOMContentLoaded", function () {
+                // Check session on page load
+                checkSessionValidity();
+
+                // Check session when tab becomes visible again (browser back button)
+                document.addEventListener("visibilitychange", function () {
+                    if (document.visibilityState === "visible") {
+                        checkSessionValidity();
+                    }
+                });
+            });
         </script>
         <!-- Edit Topic Modal -->
         <div

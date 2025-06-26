@@ -452,8 +452,70 @@ async function loadInstructorTopics() {
   }
 }
 
+// ---- Session validity check for dashboard protection ----
+function checkSessionValidity() {
+  // Make a lightweight request to check session
+  fetch("/auth/check-auth", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      // If not logged in, redirect to login page
+      if (!data.isLoggedIn) {
+        window.location.href = "/auth/login";
+        return;
+      }
+
+      // Check if user has the right role for this page
+      const currentPath = window.location.pathname;
+      const userRole = data.userRole;
+
+      // Check if user is accessing the correct dashboard for their role
+      if (currentPath.startsWith("/student/") && userRole !== "student") {
+        window.location.href = `/${userRole}/dashboard`;
+      } else if (
+        currentPath.startsWith("/instructor/") &&
+        userRole !== "instructor"
+      ) {
+        window.location.href = `/${userRole}/dashboard`;
+      } else if (
+        currentPath.startsWith("/secretariat/") &&
+        userRole !== "secretariat"
+      ) {
+        window.location.href = `/${userRole}/dashboard`;
+      }
+    })
+    .catch((error) => {
+      console.error("Session check failed:", error);
+      // On error, safest to redirect to login
+      window.location.href = "/auth/login";
+    });
+}
+
 // Initialize event listeners when the DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
+  // ---- Dashboard session protection ----
+  const currentPath = window.location.pathname;
+  if (
+    currentPath.startsWith("/student/") ||
+    currentPath.startsWith("/instructor/") ||
+    currentPath.startsWith("/secretariat/")
+  ) {
+    // Check session validity on page load
+    checkSessionValidity();
+
+    // Also check session validity when tab becomes visible again
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") {
+        checkSessionValidity();
+      }
+    });
+  }
+
   // Common elements across all pages
   const logoutButtons = document.querySelectorAll(".logout-button");
   logoutButtons.forEach((button) => {
@@ -495,7 +557,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Page specific initializations
-  const currentPath = window.location.pathname;
+  // (currentPath already defined above)
 
   // Check if we're on the announcements page
   if (currentPath.includes("/public/announcements")) {

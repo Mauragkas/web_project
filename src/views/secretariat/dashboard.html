@@ -9,6 +9,20 @@
         <link rel="stylesheet" href="/css/style.css" />
         <script src="/js/main.js" defer></script>
         <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            // Check session validity immediately and when tab becomes visible
+            document.addEventListener("DOMContentLoaded", function () {
+                // Check session on page load
+                checkSessionValidity();
+
+                // Check session when tab becomes visible again (browser back button)
+                document.addEventListener("visibilitychange", function () {
+                    if (document.visibilityState === "visible") {
+                        checkSessionValidity();
+                    }
+                });
+            });
+        </script>
     </head>
     <body class="bg-gray-100 text-gray-800">
         <div class="flex h-screen">

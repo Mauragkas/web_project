@@ -23,6 +23,22 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files
 app.use(express.static(path.join(__dirname, "../public")));
 
+// Set cache-control headers for dashboard and sensitive pages
+app.use((req, res, next) => {
+  // Set no-cache headers for dashboard routes
+  if (
+    req.path.includes("/dashboard") ||
+    req.path.includes("/student/") ||
+    req.path.includes("/instructor/") ||
+    req.path.includes("/secretariat/")
+  ) {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    res.set("Pragma", "no-cache");
+    res.set("Expires", "0");
+  }
+  next();
+});
+
 // Setup session middleware
 app.use(
   session({
