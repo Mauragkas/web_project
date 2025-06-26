@@ -148,7 +148,9 @@
                     <form id="assignTopicForm" class="space-y-6">
                         <!-- Topic selection -->
                         <div>
-                            <label for="topic-select" class="block font-semibold mb-2"
+                            <label
+                                for="topic-select"
+                                class="block font-semibold mb-2"
                                 >Select Topic</label
                             >
                             <select
@@ -164,7 +166,9 @@
 
                         <!-- Student search -->
                         <div>
-                            <label for="student-search" class="block font-semibold mb-2"
+                            <label
+                                for="student-search"
+                                class="block font-semibold mb-2"
                                 >Search Student</label
                             >
                             <div class="flex space-x-2">
@@ -240,35 +244,49 @@
                     </p>
                     <div class="mt-4">
                         <div class="flex space-x-4 mb-4">
-                          <select id="thesis-status-filter" class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">Filter by Status</option>
-                            <option value="Under Assignment">Under Assignment</option>
-                            <option value="Active">Active</option>
-                            <option value="Under Examination">Under Examination</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Cancelled">Cancelled</option>
-                          </select>
-                          <select id="thesis-role-filter" class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">Filter by Role</option>
-                            <option value="supervisor">Supervisor</option>
-                            <option value="committee">Committee Member</option>
-                          </select>
+                            <select
+                                id="thesis-status-filter"
+                                class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                            >
+                                <option value="">Filter by Status</option>
+                                <option value="Under Assignment">
+                                    Under Assignment
+                                </option>
+                                <option value="Active">Active</option>
+                                <option value="Under Examination">
+                                    Under Examination
+                                </option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                            <select
+                                id="thesis-role-filter"
+                                class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                            >
+                                <option value="">Filter by Role</option>
+                                <option value="supervisor">Supervisor</option>
+                                <option value="committee">
+                                    Committee Member
+                                </option>
+                            </select>
                         </div>
                         <div id="instructor-theses-list">
-                          <div class="text-gray-500 text-center">Loading theses...</div>
+                            <div class="text-gray-500 text-center">
+                                Loading theses...
+                            </div>
                         </div>
-                          <button
+                        <button
                             id="export-theses-csv"
                             class="bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75"
-                          >
+                        >
                             Export List (CSV)
-                          </button>
-                          <button
+                        </button>
+                        <button
                             id="export-theses-json"
                             class="bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75"
-                          >
+                        >
                             Export List (JSON)
-                          </button>
+                        </button>
                     </div>
                 </section>
 
@@ -472,7 +490,7 @@
                         name="existingDocumentPath"
                     />
                     <div>
-</div>                        <label for="edit-title" class="block font-semibold mb-1"
+                        <label for="edit-title" class="block font-semibold mb-1"
                             >Title</label
                         >
                         <input
@@ -484,7 +502,7 @@
                         />
                     </div>
                     <div>
-</div>                        <label
+                        <label
                             for="edit-description"
                             class="block font-semibold mb-1"
                             >Description</label
@@ -498,7 +516,7 @@
                         ></textarea>
                     </div>
                     <div>
-</div>                        <label
+                        <label
                             for="edit-document"
                             class="block font-semibold mb-1"
                             >Replace PDF (optional)</label

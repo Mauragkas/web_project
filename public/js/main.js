@@ -384,7 +384,8 @@ async function loadInstructorTopics() {
     `,
       )
       .join("");
-    // Re-attach edit-topic-btn event listeners if needed
+
+    // Attach edit button handlers
     document.querySelectorAll(".edit-topic-btn").forEach((btn) => {
       btn.addEventListener("click", async function () {
         const topicDiv = btn.closest("[data-topic-id]");
@@ -420,6 +421,56 @@ async function loadInstructorTopics() {
         document.getElementById("editTopicModal").classList.remove("hidden");
       });
     });
+
+    // Attach close modal handler
+    const closeEditModalBtn = document.getElementById("closeEditModal");
+    if (closeEditModalBtn) {
+      closeEditModalBtn.onclick = function () {
+        document.getElementById("editTopicModal").classList.add("hidden");
+      };
+    }
+
+    // Attach submit handler for edit form (only once)
+    const editTopicForm = document.getElementById("editTopicForm");
+    if (editTopicForm && !editTopicForm.dataset.listenerAttached) {
+      editTopicForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const topicId = document.getElementById("edit-topic-id").value;
+        const form = e.target;
+        const formData = new FormData(form);
+        const messageEl = document.getElementById("editTopicMessage");
+        messageEl.classList.add("hidden");
+        messageEl.textContent = "";
+
+        try {
+          const response = await fetch(
+            `/instructor/api/instructor/topics/${topicId}/update`,
+            {
+              method: "POST",
+              body: formData,
+            },
+          );
+          const data = await response.json();
+          if (data.success) {
+            messageEl.textContent = "Topic updated successfully!";
+            messageEl.classList.remove("hidden", "text-red-600");
+            messageEl.classList.add("text-green-600");
+
+            // Optionally, update the topic in the list without reload
+            setTimeout(() => window.location.reload(), 1000);
+          } else {
+            messageEl.textContent = data.message || "Failed to update topic.";
+            messageEl.classList.remove("hidden", "text-green-600");
+            messageEl.classList.add("text-red-600");
+          }
+        } catch (err) {
+          messageEl.textContent = "Server error. Please try again.";
+          messageEl.classList.remove("hidden", "text-green-600");
+          messageEl.classList.add("text-red-600");
+        }
+      });
+      editTopicForm.dataset.listenerAttached = "true";
+    }
 
     // Attach delete button handler
     document
@@ -746,88 +797,6 @@ document.addEventListener("DOMContentLoaded", function () {
         downloadFile(url, "theses.json");
       });
     }
-  }
-
-  // ---- Instructor Topics Edit Modal Functionality ----
-  // Only run this if the edit-topic-btn exists (i.e., on topics.html for instructors)
-  if (document.querySelector(".edit-topic-btn")) {
-    // Open modal on Edit button click
-    document.querySelectorAll(".edit-topic-btn").forEach((btn) => {
-      btn.addEventListener("click", async function () {
-        const topicDiv = btn.closest("[data-topic-id]");
-        const topicId = topicDiv.getAttribute("data-topic-id");
-
-        // Fetch topic details via AJAX
-        const res = await fetch(
-          `/instructor/api/instructor/topics/${topicId}/edit`,
-        );
-        const data = await res.json();
-        if (!data.success) {
-          alert(data.message || "Failed to load topic details.");
-          return;
-        }
-        const topic = data.topic;
-
-        // Populate modal fields
-        document.getElementById("edit-topic-id").value = topic.id;
-        document.getElementById("edit-title").value = topic.title;
-        document.getElementById("edit-description").value =
-          topic.description || "";
-        document.getElementById("edit-existing-document-path").value =
-          topic.document_path || "";
-        if (topic.document_path) {
-          document.getElementById("current-document-link").innerHTML =
-            `<a href="${topic.document_path}" target="_blank" class="text-indigo-600 underline">Current PDF</a>`;
-        } else {
-          document.getElementById("current-document-link").innerHTML =
-            "<span class='text-gray-500'>No PDF attached</span>";
-        }
-
-        // Show modal
-        document.getElementById("editTopicModal").classList.remove("hidden");
-      });
-    });
-
-    // Submit edit form
-    document
-      .getElementById("editTopicForm")
-      .addEventListener("submit", async function (e) {
-        e.preventDefault();
-        const topicId = document.getElementById("edit-topic-id").value;
-        const form = e.target;
-        const formData = new FormData(form);
-        const messageEl = document.getElementById("editTopicMessage");
-        messageEl.classList.add("hidden");
-        messageEl.textContent = "";
-
-        try {
-          const response = await fetch(
-            `/instructor/api/instructor/topics/${topicId}/update`,
-            {
-              method: "POST",
-              body: formData,
-            },
-          );
-          const data = await response.json();
-          if (data.success) {
-            messageEl.textContent = "Topic updated successfully!";
-            messageEl.classList.remove("hidden", "text-red-600");
-            messageEl.classList.add("text-green-600");
-
-            // Optionally, update the topic in the list without reload
-            // (for demo, just reload the page)
-            setTimeout(() => window.location.reload(), 1000);
-          } else {
-            messageEl.textContent = data.message || "Failed to update topic.";
-            messageEl.classList.remove("hidden", "text-green-600");
-            messageEl.classList.add("text-red-600");
-          }
-        } catch (err) {
-          messageEl.textContent = "Server error. Please try again.";
-          messageEl.classList.remove("hidden", "text-green-600");
-          messageEl.classList.add("text-red-600");
-        }
-      });
   }
 
   async function loadAvailableTopics() {
