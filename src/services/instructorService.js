@@ -1,7 +1,7 @@
 const path = require("path");
 const thesisService = require("./thesisService");
 const studentService = require("./studentService");
-const { findInstructors } = require("../db/database");
+const { findInstructors, executeQuery } = require("../db/database");
 
 class InstructorService {
   async processNewTopic(instructorId, title, description, file) {
@@ -151,6 +151,23 @@ class InstructorService {
     } catch (error) {
       console.error("Error cancelling assignment:", error);
       return { success: false, message: "Internal server error" };
+    }
+  }
+
+  async getInstructorsWithAvailableTopics() {
+    try {
+      const query = `
+        SELECT DISTINCT u.id, u.full_name, u.email
+        FROM users u
+        JOIN thesis_topics tt ON u.id = tt.instructor_id
+        WHERE tt.status = 'Available' AND u.role = 'instructor'
+        ORDER BY u.full_name
+      `;
+
+      return await executeQuery(query, []);
+    } catch (error) {
+      console.error("Error getting instructors with available topics:", error);
+      throw error;
     }
   }
 }

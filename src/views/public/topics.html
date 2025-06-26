@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <link rel="icon" href="/favicon.jpg" type="image/jpeg" />
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Available Thesis Topics - Thesis Management System</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="/css/style.css" />
+        <script type="module" src="/js/main.js"></script>
+    </head>
+    <body class="animated-gradient text-gray-800 min-h-screen">
+        <!-- Header Navigation -->
+        <header
+            class="bg-gray-900 bg-opacity-90 backdrop-blur-lg text-white py-4 px-6 shadow-lg"
+        >
+            <div
+                class="container mx-auto flex flex-col md:flex-row items-center justify-between"
+            >
+                <div class="flex items-center mb-4 md:mb-0">
+                    <h1 class="text-2xl font-bold">Thesis Management System</h1>
+                </div>
+                <nav
+                    class="flex flex-wrap justify-center space-x-1 md:space-x-4 items-center"
+                >
+                    <a
+                        href="/"
+                        class="px-3 py-2 text-sm md:text-base rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70"
+                        >Home</a
+                    >
+                    <a
+                        href="/public/announcements"
+                        class="px-3 py-2 text-sm md:text-base rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70"
+                        >Announcements</a
+                    >
+                    <a
+                        href="/public/topics"
+                        class="px-3 py-2 text-sm md:text-base rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70"
+                        >Topic Catalog</a
+                    >
+
+                    <!-- User not logged in: show login button -->
+                    <div
+                        id="loginButtonContainer"
+                        class="user-auth-section hidden"
+                    >
+                        <a
+                            href="/auth/login"
+                            class="px-3 py-2 text-sm md:text-base rounded bg-indigo-600 hover:bg-indigo-700 transition duration-200"
+                            >Login</a
+                        >
+                    </div>
+
+                    <!-- User logged in: show user info and dropdown -->
+                    <div
+                        id="userInfoContainer"
+                        class="user-auth-section hidden relative"
+                    >
+                        <button
+                            id="userMenuToggle"
+                            class="flex items-center space-x-1 px-3 py-2 text-sm md:text-base rounded bg-indigo-600 hover:bg-indigo-700 transition duration-200"
+                        >
+                            <span id="userDisplayName">User</span>
+                            <span
+                                id="userRoleBadge"
+                                class="text-xs bg-indigo-800 px-2 py-0.5 rounded-full"
+                                >Role</span
+                            >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </button>
+                        <!-- Dropdown menu -->
+                        <div
+                            id="userDropdown"
+                            class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
+                        >
+                            <a
+                                id="dashboardLink"
+                                href="#"
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100"
+                                >Dashboard</a
+                            >
+                            <a
+                                href="#"
+                                class="logout-button block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100"
+                                >Logout</a
+                            >
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </header>
+
+        <div class="container mx-auto px-4 py-8">
+            <div class="max-w-6xl mx-auto">
+                <h1 class="text-3xl font-bold text-center mb-6">
+                    Available Thesis Topics
+                </h1>
+                <p class="text-gray-600 text-center mb-8">
+                    Browse all available thesis topics. Login as a student to
+                    request assignment to a topic.
+                </p>
+
+                <!-- Filter Section -->
+                <div
+                    class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-lg shadow-lg mb-8"
+                >
+                    <h2 class="text-xl font-semibold mb-4">Filter Topics</h2>
+                    <form
+                        id="filter-form"
+                        class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0"
+                        autocomplete="off"
+                    >
+                        <div class="flex-1">
+                            <input
+                                type="text"
+                                id="search-keyword"
+                                placeholder="Search by keyword"
+                                class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"
+                            />
+                        </div>
+                        <div class="flex-1">
+                            <select
+                                id="filter-instructor"
+                                class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"
+                            >
+                                <option value="">All Instructors</option>
+                            </select>
+                        </div>
+                        <div class="w-full md:w-auto">
+                            <button
+                                id="apply-filter"
+                                type="submit"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 w-full md:w-auto"
+                            >
+                                Apply Filter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Topics Grid -->
+                <div
+                    id="topics-container"
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative min-h-[200px]"
+                >
+                    <!-- Spinner -->
+                    <div
+                        id="loading-spinner"
+                        class="col-span-full flex flex-col items-center justify-center absolute inset-0 z-10 bg-white bg-opacity-70"
+                    >
+                        <svg
+                            class="animate-spin h-12 w-12 text-indigo-600"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            aria-label="Loading"
+                        >
+                            <circle
+                                class="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                stroke-width="4"
+                            ></circle>
+                            <path
+                                class="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8v8z"
+                            ></path>
+                        </svg>
+                        <span class="mt-4 text-indigo-700 font-medium"
+                            >Loading topics...</span
+                        >
+                    </div>
+                    <!-- No results message -->
+                    <div
+                        id="no-results"
+                        class="hidden col-span-full text-center py-12"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-12 w-12 mx-auto text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                        <p class="mt-4 text-gray-600">
+                            No available topics found matching your criteria.
+                        </p>
+                    </div>
+                    <!-- Topic cards will be inserted here -->
+                </div>
+
+                <!-- Topic Detail Modal (hidden by default) -->
+                <div
+                    id="topic-detail-modal"
+                    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+                    tabindex="-1"
+                    aria-modal="true"
+                    role="dialog"
+                >
+                    <div
+                        class="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto relative"
+                    >
+                        <div class="p-6">
+                            <div class="flex justify-between items-start">
+                                <h2
+                                    id="modal-title"
+                                    class="text-2xl font-bold text-gray-800"
+                                ></h2>
+                                <button
+                                    id="close-modal"
+                                    class="text-gray-500 hover:text-gray-700"
+                                    aria-label="Close details"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        class="h-6 w-6"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="mt-4">
+                                <p
+                                    class="text-sm text-gray-500"
+                                    id="modal-instructor"
+                                ></p>
+                                <p
+                                    class="text-sm text-gray-500"
+                                    id="modal-date"
+                                ></p>
+                                <div class="mt-4">
+                                    <h3 class="text-lg font-semibold">
+                                        Description
+                                    </h3>
+                                    <p
+                                        id="modal-description"
+                                        class="mt-2 text-gray-700"
+                                    ></p>
+                                </div>
+                                <div id="modal-document-section" class="mt-4">
+                                    <h3 class="text-lg font-semibold">
+                                        Attached Document
+                                    </h3>
+                                    <a
+                                        id="modal-document"
+                                        href="#"
+                                        target="_blank"
+                                        class="inline-flex items-center mt-2 text-indigo-600 hover:text-indigo-800"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            class="h-5 w-5 mr-2"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                            />
+                                        </svg>
+                                        View PDF Document
+                                    </a>
+                                </div>
+                                <div class="mt-6 pt-4 border-t border-gray-200">
+                                    <p class="text-gray-600">
+                                        If you're interested in this topic,
+                                        please login as a student to request
+                                        assignment.
+                                    </p>
+                                    <div class="mt-4 flex space-x-4">
+                                        <a
+                                            href="/auth/login"
+                                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
+                                        >
+                                            Login
+                                        </a>
+                                        <button
+                                            id="modal-close-btn"
+                                            class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75"
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                // User login status
+                checkUserLoggedIn();
+
+                // Load instructors for filter dropdown
+                loadInstructors();
+
+                // Load topics on page load
+                loadAvailableTopics();
+
+                // Filter form
+                document
+                    .getElementById("filter-form")
+                    .addEventListener("submit", function (e) {
+                        e.preventDefault();
+                        loadAvailableTopics();
+                    });
+
+                // Modal close buttons and focus trap
+                function closeModal() {
+                    const modal = document.getElementById("topic-detail-modal");
+                    modal.classList.add("hidden");
+                    document.body.style.overflow = "auto";
+                    // Remove focus trap
+                    document.removeEventListener("keydown", trapFocus);
+                }
+                document
+                    .getElementById("close-modal")
+                    .addEventListener("click", closeModal);
+                document
+                    .getElementById("modal-close-btn")
+                    .addEventListener("click", closeModal);
+                document
+                    .getElementById("topic-detail-modal")
+                    .addEventListener("click", function (e) {
+                        if (e.target === this) closeModal();
+                    });
+
+                // Focus trap for modal
+                function trapFocus(e) {
+                    const modal = document.getElementById("topic-detail-modal");
+                    if (!modal.classList.contains("hidden")) {
+                        const focusable = modal.querySelectorAll(
+                            'a, button, textarea, input, select, [tabindex]:not([tabindex="-1"])',
+                        );
+                        const first = focusable[0];
+                        const last = focusable[focusable.length - 1];
+                        if (e.key === "Tab") {
+                            if (e.shiftKey) {
+                                if (document.activeElement === first) {
+                                    last.focus();
+                                    e.preventDefault();
+                                }
+                            } else {
+                                if (document.activeElement === last) {
+                                    first.focus();
+                                    e.preventDefault();
+                                }
+                            }
+                        }
+                        if (e.key === "Escape") closeModal();
+                    }
+                }
+
+                // --- Functions ---
+                function checkUserLoggedIn() {
+                    fetch("/auth/check-auth", {
+                        method: "GET",
+                        headers: { "Content-Type": "application/json" },
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.isLoggedIn) {
+                                document
+                                    .getElementById("loginButtonContainer")
+                                    .classList.add("hidden");
+                                document.getElementById(
+                                    "userDisplayName",
+                                ).textContent = data.username;
+                                document.getElementById(
+                                    "userRoleBadge",
+                                ).textContent = capitalizeFirstLetter(
+                                    data.userRole,
+                                );
+                                document.getElementById("dashboardLink").href =
+                                    `/${data.userRole}/dashboard`;
+                                document
+                                    .getElementById("userInfoContainer")
+                                    .classList.remove("hidden");
+                            } else {
+                                document
+                                    .getElementById("userInfoContainer")
+                                    .classList.add("hidden");
+                                document
+                                    .getElementById("loginButtonContainer")
+                                    .classList.remove("hidden");
+                            }
+                        })
+                        .catch(() => {
+                            document
+                                .getElementById("userInfoContainer")
+                                .classList.add("hidden");
+                            document
+                                .getElementById("loginButtonContainer")
+                                .classList.remove("hidden");
+                        });
+                }
+                function capitalizeFirstLetter(string) {
+                    return string.charAt(0).toUpperCase() + string.slice(1);
+                }
+
+                function loadInstructors() {
+                    fetch("/public/api/instructors")
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.success) {
+                                const select =
+                                    document.getElementById(
+                                        "filter-instructor",
+                                    );
+                                // Remove all except first option
+                                select.innerHTML =
+                                    '<option value="">All Instructors</option>';
+                                data.instructors.forEach((instructor) => {
+                                    const option =
+                                        document.createElement("option");
+                                    option.value = instructor.id;
+                                    option.textContent = instructor.full_name;
+                                    select.appendChild(option);
+                                });
+                            }
+                        })
+                        .catch(() => {});
+                }
+
+                function loadAvailableTopics() {
+                    const container =
+                        document.getElementById("topics-container");
+                    const spinner = document.getElementById("loading-spinner");
+                    const noResults = document.getElementById("no-results");
+                    // Remove all topic cards
+                    container
+                        .querySelectorAll(".topic-card")
+                        .forEach((el) => el.remove());
+                    // Show spinner, hide no results
+                    spinner.classList.remove("hidden");
+                    noResults.classList.add("hidden");
+                    // Disable filter button
+                    document.getElementById("apply-filter").disabled = true;
+
+                    // Get filter values
+                    const keyword = document
+                        .getElementById("search-keyword")
+                        .value.trim();
+                    const instructorId =
+                        document.getElementById("filter-instructor").value;
+                    let queryParams = "?status=Available";
+                    if (keyword)
+                        queryParams += `&keyword=${encodeURIComponent(keyword)}`;
+                    if (instructorId)
+                        queryParams += `&instructor=${encodeURIComponent(instructorId)}`;
+
+                    fetch(`/public/api/topics${queryParams}`)
+                        .then((response) => response.json())
+                        .then((data) => {
+                            spinner.classList.add("hidden");
+                            document.getElementById("apply-filter").disabled =
+                                false;
+                            // Remove old cards again (in case of race)
+                            container
+                                .querySelectorAll(".topic-card")
+                                .forEach((el) => el.remove());
+                            if (data.success && data.topics.length > 0) {
+                                data.topics.forEach((topic) => {
+                                    container.appendChild(
+                                        createTopicCard(topic),
+                                    );
+                                });
+                            } else {
+                                noResults.classList.remove("hidden");
+                            }
+                        })
+                        .catch(() => {
+                            spinner.classList.add("hidden");
+                            document.getElementById("apply-filter").disabled =
+                                false;
+                            noResults.classList.remove("hidden");
+                            noResults.querySelector("p").textContent =
+                                "Error loading topics. Please try again later.";
+                        });
+                }
+
+                function createTopicCard(topic) {
+                    const card = document.createElement("div");
+                    card.className =
+                        "topic-card bg-white bg-opacity-90 backdrop-blur-lg rounded-lg shadow-lg overflow-hidden transition-transform duration-200 hover:shadow-xl hover:-translate-y-1";
+                    const createdDate = new Date(
+                        topic.created_at,
+                    ).toLocaleDateString();
+                    const shortDescription =
+                        topic.description && topic.description.length > 100
+                            ? topic.description.substring(0, 100) + "..."
+                            : topic.description || "";
+                    card.innerHTML = `
+            <div class="p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">${topic.title}</h3>
+                <p class="text-sm text-gray-500 mb-1">Instructor: ${topic.instructor_name}</p>
+                <p class="text-sm text-gray-500 mb-3">Posted: ${createdDate}</p>
+                <p class="text-gray-700 mb-4">${shortDescription}</p>
+                <button class="view-details-btn w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
+                        data-topic-id="${topic.id}">
+                    View Details
+                </button>
+            </div>
+        `;
+                    card.querySelector(".view-details-btn").addEventListener(
+                        "click",
+                        function () {
+                            openTopicDetails(topic);
+                        },
+                    );
+                    return card;
+                }
+
+                function openTopicDetails(topic) {
+                    const modal = document.getElementById("topic-detail-modal");
+                    document.getElementById("modal-title").textContent =
+                        topic.title;
+                    document.getElementById("modal-instructor").textContent =
+                        `Instructor: ${topic.instructor_name}`;
+                    document.getElementById("modal-date").textContent =
+                        `Posted: ${new Date(topic.created_at).toLocaleDateString()}`;
+                    document.getElementById("modal-description").textContent =
+                        topic.description || "-";
+                    // Document link
+                    const documentSection = document.getElementById(
+                        "modal-document-section",
+                    );
+                    const documentLink =
+                        document.getElementById("modal-document");
+                    if (topic.document_path) {
+                        documentSection.classList.remove("hidden");
+                        documentLink.href = topic.document_path;
+                    } else {
+                        documentSection.classList.add("hidden");
+                    }
+                    modal.classList.remove("hidden");
+                    document.body.style.overflow = "hidden";
+                    // Focus trap
+                    document.addEventListener("keydown", trapFocus);
+                    // Focus close button for accessibility
+                    setTimeout(() => {
+                        document.getElementById("close-modal").focus();
+                    }, 100);
+                }
+            });
+        </script>
+        <script type="module" src="/js/main.js"></script>
+    </body>
+</html>

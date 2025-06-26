@@ -308,6 +308,58 @@ class ThesisService {
     }
     return { status: "Under Assignment" };
   }
+
+  async getPublicAvailableTopics(filters = {}) {
+    try {
+      let query = `
+        SELECT tt.id, tt.title, tt.description, tt.document_path, tt.created_at,
+               u.full_name as instructor_name, u.id as instructor_id
+        FROM thesis_topics tt
+        JOIN users u ON tt.instructor_id = u.id
+        WHERE tt.status = 'Available'
+      `;
+
+      const params = [];
+
+      // Add keyword filter if provided
+      if (filters.keyword) {
+        query += ` AND (tt.title LIKE ? OR tt.description LIKE ?)`;
+        params.push(`%${filters.keyword}%`, `%${filters.keyword}%`);
+      }
+
+      // Add instructor filter if provided
+      if (filters.instructorId) {
+        query += ` AND tt.instructor_id = ?`;
+        params.push(filters.instructorId);
+      }
+
+      query += ` ORDER BY tt.created_at DESC`;
+
+      return await executeQuery(query, params);
+    } catch (error) {
+      console.error("Error getting available topics:", error);
+      throw error;
+    }
+  }
+
+  // In instructorService.js, add:
+
+  async getInstructorsWithAvailableTopics() {
+    try {
+      const query = `
+        SELECT DISTINCT u.id, u.full_name, u.email
+        FROM users u
+        JOIN thesis_topics tt ON u.id = tt.instructor_id
+        WHERE tt.status = 'Available' AND u.role = 'instructor'
+        ORDER BY u.full_name
+      `;
+
+      return await executeQuery(query, []);
+    } catch (error) {
+      console.error("Error getting instructors with available topics:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new ThesisService();
