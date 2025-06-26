@@ -71,7 +71,7 @@
                         >View & Create Topics</a
                     >
                     <a
-                        href="#"
+                        href="/instructor/assign-topic"
                         class="block py-2.5 px-4 rounded transition duration-200 hover:bg-indigo-700 hover:bg-opacity-70"
                         >Assign Topic</a
                     >
@@ -141,21 +141,91 @@
                     <h2 class="text-2xl font-semibold mb-4">
                         Assign Topic to Student
                     </h2>
-                    <p class="text-gray-600">
-                        Assign an available topic to a student by searching for
-                        them.
+                    <p class="text-gray-600 mb-6">
+                        Choose an available topic and assign it to a student.
                     </p>
-                    <div class="mt-4">
-                        <input
-                            type="text"
-                            placeholder="Search student by ID or name"
-                            class="border border-gray-300 p-2 rounded-md mr-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        />
-                        <button
-                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
+
+                    <form id="assignTopicForm" class="space-y-6">
+                        <!-- Topic selection -->
+                        <div>
+                            <label for="topic-select" class="block font-semibold mb-2"
+                                >Select Topic</label
+                            >
+                            <select
+                                id="topic-select"
+                                name="topicId"
+                                required
+                                class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            >
+                                <option value="">-- Select a topic --</option>
+                                <!-- Topics will be loaded dynamically -->
+                            </select>
+                        </div>
+
+                        <!-- Student search -->
+                        <div>
+                            <label for="student-search" class="block font-semibold mb-2"
+                                >Search Student</label
+                            >
+                            <div class="flex space-x-2">
+                                <input
+                                    type="text"
+                                    id="student-search"
+                                    placeholder="Enter student ID or name"
+                                    class="flex-1 p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                />
+                                <button
+                                    type="button"
+                                    id="search-student-btn"
+                                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
+                                >
+                                    Search
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Student search results -->
+                        <div
+                            id="student-search-results"
+                            class="hidden border border-gray-200 rounded-md p-4 bg-gray-50"
                         >
-                            Search & Assign
+                            <!-- Student results will appear here -->
+                        </div>
+
+                        <input
+                            type="hidden"
+                            id="selected-student-id"
+                            name="studentId"
+                        />
+
+                        <!-- Assignment message -->
+                        <div
+                            id="assignment-message"
+                            class="hidden p-4 rounded-md"
+                        ></div>
+
+                        <!-- Submit button -->
+                        <button
+                            type="submit"
+                            id="assign-button"
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
+                            disabled
+                        >
+                            Assign Topic to Student
                         </button>
+                    </form>
+
+                    <!-- Current assignments section -->
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold mb-4">
+                            Current Assignments
+                        </h3>
+                        <div id="current-assignments" class="space-y-4">
+                            <!-- Current assignments will be loaded dynamically -->
+                            <div class="text-gray-500 text-center">
+                                Loading assignments...
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -423,7 +493,7 @@
                         name="existingDocumentPath"
                     />
                     <div>
-                        <label for="edit-title" class="block font-semibold mb-1"
+</div>                        <label for="edit-title" class="block font-semibold mb-1"
                             >Title</label
                         >
                         <input
@@ -435,7 +505,7 @@
                         />
                     </div>
                     <div>
-                        <label
+</div>                        <label
                             for="edit-description"
                             class="block font-semibold mb-1"
                             >Description</label
@@ -449,7 +519,7 @@
                         ></textarea>
                     </div>
                     <div>
-                        <label
+</div>                        <label
                             for="edit-document"
                             class="block font-semibold mb-1"
                             >Replace PDF (optional)</label

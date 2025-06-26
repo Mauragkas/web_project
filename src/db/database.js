@@ -20,6 +20,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
+// Initialize database with additional tables needed for assignments
 function initializeDatabase() {
   db.serialize(() => {
     // Create users table if it doesn't exist
@@ -44,6 +45,72 @@ function initializeDatabase() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (instructor_id) REFERENCES users(id)
         )`);
+
+    // Create theses table for assignments
+    db.run(`CREATE TABLE IF NOT EXISTS theses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            topic_id INTEGER NOT NULL,
+            student_id INTEGER NOT NULL,
+            supervisor_id INTEGER NOT NULL,
+            status TEXT DEFAULT 'Under Assignment',
+            assigned_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completion_date TIMESTAMP,
+            grade TEXT,
+            ap_number TEXT,
+            library_link TEXT,
+            FOREIGN KEY (topic_id) REFERENCES thesis_topics(id),
+            FOREIGN KEY (student_id) REFERENCES users(id),
+            FOREIGN KEY (supervisor_id) REFERENCES users(id)
+        )`);
+
+    // Create committee_members table
+    db.run(`CREATE TABLE IF NOT EXISTS committee_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            thesis_id INTEGER NOT NULL,
+            instructor_id INTEGER NOT NULL,
+            status TEXT DEFAULT 'Invited',
+            invitation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            response_date TIMESTAMP,
+            FOREIGN KEY (thesis_id) REFERENCES theses(id),
+            FOREIGN KEY (instructor_id) REFERENCES users(id)
+        )`);
+  });
+}
+
+// Execute a transaction with multiple operations
+function executeTransaction(operations) {
+  return new Promise((resolve, reject) => {
+    db.serialize(() => {
+      db.run("BEGIN TRANSACTION");
+
+      const promises = operations.map((operation) => {
+        return new Promise((resolveOp, rejectOp) => {
+          db.run(operation.query, operation.params, function (err) {
+            if (err) {
+              rejectOp(err);
+            } else {
+              resolveOp({ lastID: this.lastID, changes: this.changes });
+            }
+          });
+        });
+      });
+
+      Promise.all(promises)
+        .then((results) => {
+          db.run("COMMIT", (err) => {
+            if (err) {
+              db.run("ROLLBACK");
+              reject(err);
+            } else {
+              resolve(results);
+            }
+          });
+        })
+        .catch((err) => {
+          db.run("ROLLBACK");
+          reject(err);
+        });
+    });
   });
 }
 
@@ -114,6 +181,7 @@ module.exports = {
   executeQuery,
   executeRun,
   getOne,
+  executeTransaction,
   db,
   close: () => {
     return new Promise((resolve, reject) => {

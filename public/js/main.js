@@ -698,4 +698,246 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       });
   }
+
+  async function loadAvailableTopics() {
+    try {
+      const response = await fetch(
+        "/instructor/api/instructor/available-topics",
+      );
+      const data = await response.json();
+
+      const topicSelect = document.getElementById("topic-select");
+
+      if (data.success) {
+        if (data.topics.length === 0) {
+          topicSelect.innerHTML =
+            '<option value="">No available topics</option>';
+        } else {
+          let options = '<option value="">-- Select a topic --</option>';
+          data.topics.forEach((topic) => {
+            options += `<option value="${topic.id}">${topic.title}</option>`;
+          });
+          topicSelect.innerHTML = options;
+        }
+      } else {
+        topicSelect.innerHTML =
+          '<option value="">Error loading topics</option>';
+      }
+    } catch (error) {
+      console.error("Error loading topics:", error);
+      document.getElementById("topic-select").innerHTML =
+        '<option value="">Error loading topics</option>';
+    }
+  }
+
+  async function searchStudents() {
+    const query = document.getElementById("student-search").value.trim();
+    const resultsDiv = document.getElementById("student-search-results");
+
+    if (!query) {
+      resultsDiv.innerHTML =
+        '<p class="text-red-500">Please enter a student ID or name</p>';
+      resultsDiv.classList.remove("hidden");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/instructor/api/instructor/student-search?query=${encodeURIComponent(query)}`,
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        if (data.students.length === 0) {
+          resultsDiv.innerHTML =
+            '<p class="text-gray-500">No students found</p>';
+        } else {
+          let resultsHtml = '<div class="space-y-2">';
+          data.students.forEach((student) => {
+            resultsHtml += `
+                          <div class="p-3 bg-white rounded-md shadow-sm hover:bg-gray-50 cursor-pointer student-result"
+                               data-student-id="${student.id}" data-student-name="${student.full_name}">
+                              <p class="font-medium">${student.full_name}</p>
+                              <p class="text-sm text-gray-500">${student.email || "No email"}</p>
+                          </div>
+                      `;
+          });
+          resultsHtml += "</div>";
+          resultsDiv.innerHTML = resultsHtml;
+
+          // Add click events to results
+          document.querySelectorAll(".student-result").forEach((el) => {
+            el.addEventListener("click", function () {
+              selectStudent(
+                this.getAttribute("data-student-id"),
+                this.getAttribute("data-student-name"),
+              );
+            });
+          });
+        }
+      } else {
+        resultsDiv.innerHTML = `<p class="text-red-500">${data.message || "Error searching for students"}</p>`;
+      }
+
+      resultsDiv.classList.remove("hidden");
+    } catch (error) {
+      console.error("Error searching students:", error);
+      resultsDiv.innerHTML =
+        '<p class="text-red-500">Server error while searching for students</p>';
+      resultsDiv.classList.remove("hidden");
+    }
+  }
+
+  function selectStudent(studentId, studentName) {
+    document.getElementById("selected-student-id").value = studentId;
+    document.getElementById("student-search").value = studentName;
+    document.getElementById("student-search-results").classList.add("hidden");
+
+    // Enable the assign button
+    document.getElementById("assign-button").disabled = false;
+  }
+
+  async function assignTopic(e) {
+    e.preventDefault();
+
+    const topicId = document.getElementById("topic-select").value;
+    const studentId = document.getElementById("selected-student-id").value;
+    const messageDiv = document.getElementById("assignment-message");
+
+    if (!topicId || !studentId) {
+      messageDiv.innerHTML =
+        '<p class="text-red-500">Please select both a topic and a student</p>';
+      messageDiv.classList.remove("hidden");
+      return;
+    }
+
+    try {
+      const response = await fetch("/instructor/api/instructor/assign-topic", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ topicId, studentId }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        messageDiv.innerHTML = `<p class="text-green-500">${data.message || "Topic assigned successfully!"}</p>`;
+
+        // Refresh the available topics and current assignments
+        loadAvailableTopics();
+        loadCurrentAssignments();
+
+        // Reset form
+        document.getElementById("topic-select").value = "";
+        document.getElementById("student-search").value = "";
+        document.getElementById("selected-student-id").value = "";
+        document.getElementById("assign-button").disabled = true;
+      } else {
+        messageDiv.innerHTML = `<p class="text-red-500">${data.message || "Failed to assign topic"}</p>`;
+      }
+
+      messageDiv.classList.remove("hidden");
+    } catch (error) {
+      console.error("Error assigning topic:", error);
+      messageDiv.innerHTML =
+        '<p class="text-red-500">Server error while assigning topic</p>';
+      messageDiv.classList.remove("hidden");
+    }
+  }
+
+  async function loadCurrentAssignments() {
+    try {
+      const response = await fetch(
+        "/instructor/api/instructor/current-assignments",
+      );
+      const data = await response.json();
+
+      const assignmentsDiv = document.getElementById("current-assignments");
+
+      if (data.success) {
+        if (data.assignments.length === 0) {
+          assignmentsDiv.innerHTML =
+            '<p class="text-gray-500 text-center">No current assignments</p>';
+        } else {
+          let assignmentsHtml = "";
+          data.assignments.forEach((assignment) => {
+            assignmentsHtml += `
+                          <div class="bg-white p-4 rounded-md shadow border-l-4 border-indigo-500">
+                              <div class="flex justify-between items-start">
+                                  <div>
+                                      <h3 class="font-semibold text-lg">${assignment.topic_title}</h3>
+                                      <p class="text-sm text-gray-600">Assigned to: ${assignment.student_name}</p>
+                                      <p class="text-sm text-gray-600">Status: ${assignment.status}</p>
+                                      <p class="text-xs text-gray-500">Assigned on: ${new Date(assignment.assigned_date).toLocaleDateString()}</p>
+                                  </div>
+                                  <button class="text-red-500 hover:text-red-700 cancel-assignment-btn"
+                                          data-assignment-id="${assignment.id}">
+                                      Cancel
+                                  </button>
+                              </div>
+                          </div>
+                      `;
+          });
+          assignmentsDiv.innerHTML = assignmentsHtml;
+
+          // Add click events to cancel buttons
+          document.querySelectorAll(".cancel-assignment-btn").forEach((el) => {
+            el.addEventListener("click", function () {
+              cancelAssignment(this.getAttribute("data-assignment-id"));
+            });
+          });
+        }
+      } else {
+        assignmentsDiv.innerHTML = `<p class="text-red-500 text-center">${data.message || "Error loading assignments"}</p>`;
+      }
+    } catch (error) {
+      console.error("Error loading assignments:", error);
+      document.getElementById("current-assignments").innerHTML =
+        '<p class="text-red-500 text-center">Server error while loading assignments</p>';
+    }
+  }
+
+  async function cancelAssignment(assignmentId) {
+    if (!confirm("Are you sure you want to cancel this assignment?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/instructor/api/instructor/cancel-assignment/${assignmentId}`,
+        {
+          method: "POST",
+        },
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Refresh the lists
+        loadAvailableTopics();
+        loadCurrentAssignments();
+      } else {
+        alert(data.message || "Failed to cancel assignment");
+      }
+    } catch (error) {
+      console.error("Error cancelling assignment:", error);
+      alert("Server error while cancelling assignment");
+    }
+  }
+
+  // ---- Assign Topic Integration (from assign-topic.html) ----
+  if (document.getElementById("assignTopicForm")) {
+    loadAvailableTopics();
+    loadCurrentAssignments();
+
+    document
+      .getElementById("search-student-btn")
+      .addEventListener("click", searchStudents);
+
+    document
+      .getElementById("assignTopicForm")
+      .addEventListener("submit", assignTopic);
+  }
 });

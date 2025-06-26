@@ -1,4 +1,5 @@
 const instructorService = require("../services/instructorService");
+const studentService = require("../services/studentService");
 
 class InstructorController {
   async createTopic(req, res) {
@@ -124,6 +125,111 @@ class InstructorController {
       return res.json({ success: true, topics });
     } catch (error) {
       console.error("Get instructor topics error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+
+  async getAvailableTopics(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const topics =
+        await instructorService.getAvailableTopicsForAssignment(instructorId);
+      return res.json({ success: true, topics });
+    } catch (error) {
+      console.error("Get available topics error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+
+  async searchStudent(req, res) {
+    try {
+      const query = req.query.query;
+      if (!query) {
+        return res.status(400).json({
+          success: false,
+          message: "Search query is required",
+        });
+      }
+
+      const students = await studentService.findStudentByIdOrName(query);
+      return res.json({ success: true, students });
+    } catch (error) {
+      console.error("Student search error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+
+  async assignTopicToStudent(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const { topicId, studentId } = req.body;
+
+      if (!topicId || !studentId) {
+        return res.status(400).json({
+          success: false,
+          message: "Topic ID and Student ID are required",
+        });
+      }
+
+      const result = await instructorService.assignThesisTopicTemporarily(
+        instructorId,
+        topicId,
+        studentId,
+      );
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: "Topic assigned successfully to student",
+          assignmentId: result.assignmentId,
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: result.message || "Failed to assign topic",
+        });
+      }
+    } catch (error) {
+      console.error("Assign topic error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+
+  async getCurrentAssignments(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const assignments =
+        await instructorService.getCurrentAssignments(instructorId);
+      return res.json({ success: true, assignments });
+    } catch (error) {
+      console.error("Get current assignments error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+
+  async cancelAssignment(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const assignmentId = req.params.assignmentId;
+
+      const result = await instructorService.cancelAssignment(
+        instructorId,
+        assignmentId,
+      );
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: "Assignment cancelled successfully",
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: result.message || "Failed to cancel assignment",
+        });
+      }
+    } catch (error) {
+      console.error("Cancel assignment error:", error);
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }

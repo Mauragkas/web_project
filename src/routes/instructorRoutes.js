@@ -69,4 +69,40 @@ router.delete(
   authMiddleware("instructor"),
   instructorController.deleteTopic,
 );
+
+// API: Get available topics
+router.get(
+  "/api/instructor/available-topics",
+  authMiddleware("instructor"),
+  instructorController.getAvailableTopics,
+);
+
+// API: Search for students
+router.get(
+  "/api/instructor/student-search",
+  authMiddleware("instructor"),
+  instructorController.searchStudent,
+);
+
+// API: Assign topic to student
+router.post(
+  "/api/instructor/assign-topic",
+  authMiddleware("instructor"),
+  instructorController.assignTopicToStudent,
+);
+
+// API: Get current assignments
+router.get(
+  "/api/instructor/current-assignments",
+  authMiddleware("instructor"),
+  instructorController.getCurrentAssignments,
+);
+
+// API: Cancel assignment
+router.post(
+  "/api/instructor/cancel-assignment/:assignmentId",
+  authMiddleware("instructor"),
+  instructorController.cancelAssignment,
+);
+
 module.exports = router;
