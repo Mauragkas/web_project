@@ -318,30 +318,101 @@ function showThesisDetails() {
   }
 }
 
-/**
- * Public announcements page filter functionality
- */
-function handleAnnouncementsFilter() {
-  const startDate = document.getElementById("start-date").value;
-  const endDate = document.getElementById("end-date").value;
-  console.log("Filtering from", startDate, "to", endDate);
-  // Add AJAX call here to fetch announcements based on dates
+// --- Public Announcements Page Logic ---
+async function loadPublicAnnouncements() {
+  const listDiv = document.getElementById("announcements-list");
+  if (!listDiv) return;
+
+  // Set default dates if not already set
+  const today = new Date();
+  const startDateInput = document.getElementById("start-date");
+  const endDateInput = document.getElementById("end-date");
+
+  if (startDateInput && !startDateInput.value) {
+    startDateInput.value = today.toISOString().split("T")[0];
+  }
+
+  if (endDateInput && !endDateInput.value) {
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate() + 30);
+    endDateInput.value = endDate.toISOString().split("T")[0];
+  }
+
+  // Get filter values
+  const start = startDateInput ? startDateInput.value : "";
+  const end = endDateInput ? endDateInput.value : "";
+
+  // Try to find the announcements section to update (after h2)
+  let announcementsSection = null;
+  if (listDiv.querySelector("h2")) {
+    announcementsSection = listDiv.querySelector("h2").nextElementSibling;
+  }
+  // Fallback: if not found, just use listDiv itself
+  if (!announcementsSection) announcementsSection = listDiv;
+
+  // Clear the current list content and show loading state
+  announcementsSection.innerHTML = `<div class="text-gray-500 text-center">Loading announcements...</div>`;
+
+  let url = "/public/api/announcements";
+  const params = [];
+  if (start) params.push(`start=${encodeURIComponent(start)}`);
+  if (end) params.push(`end=${encodeURIComponent(end)}`);
+  if (params.length) url += "?" + params.join("&");
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data.success) {
+      announcementsSection.innerHTML = `<div class="text-red-500 text-center">Failed to load announcements.</div>`;
+      return;
+    }
+
+    if (!data.announcements || data.announcements.length === 0) {
+      announcementsSection.innerHTML = `<div class="text-gray-500 text-center">No announcements found for the selected date range.</div>`;
+      return;
+    }
+
+    // Create HTML for announcements
+    let html = "";
+    data.announcements.forEach((a) => {
+      html += `
+        <div class="timeline-item mb-8 pb-6">
+          <div class="bg-white bg-opacity-60 p-6 rounded-md shadow-md">
+            <h3 class="text-xl font-semibold text-indigo-700 mb-2">${a.thesis_title}</h3>
+            <p class="text-gray-700 mt-1"><strong>Student:</strong> ${a.student_name}</p>
+            <p class="text-gray-700"><strong>Supervisor:</strong> ${a.supervisor_name}</p>
+            <p class="text-gray-700"><strong>Committee:</strong> ${a.committee_members || "Not assigned"}</p>
+            <p class="text-gray-700 mt-3"><strong>Date:</strong> ${a.presentation_date || "Not scheduled"}</p>
+            <p class="text-gray-700"><strong>Time:</strong> ${a.presentation_time || "Not scheduled"}</p>
+            <p class="text-gray-700"><strong>Location/Link:</strong> ${a.presentation_location || "Not specified"}</p>
+          </div>
+        </div>
+      `;
+    });
+
+    // Update the announcements section
+    announcementsSection.innerHTML = html;
+  } catch (error) {
+    console.error("Error loading announcements:", error);
+    announcementsSection.innerHTML = `<div class="text-red-500 text-center">Server error. Please try again later.</div>`;
+  }
 }
 
 /**
  * Handle XML Feed generation
  */
 function generateXmlFeed() {
+  // This function is now handled inline in DOMContentLoaded for announcements page
   console.log("Generate XML Feed clicked");
-  // Implementation would follow
 }
 
 /**
  * Handle JSON Feed generation
  */
 function generateJsonFeed() {
+  // This function is now handled inline in DOMContentLoaded for announcements page
   console.log("Generate JSON Feed clicked");
-  // Implementation would follow
 }
 
 /**
@@ -1114,21 +1185,45 @@ document.addEventListener("DOMContentLoaded", function () {
   // Page specific initializations
   // (currentPath already defined above)
 
-  // Check if we're on the announcements page
+  // --- Public Announcements Page Logic ---
   if (currentPath.includes("/public/announcements")) {
     checkUserLoggedIn();
+
+    // Initial load
+    loadPublicAnnouncements();
 
     // Filter button
     const filterButton = document.querySelector(".bg-indigo-600");
     if (filterButton) {
-      filterButton.addEventListener("click", handleAnnouncementsFilter);
+      filterButton.addEventListener("click", function (e) {
+        e.preventDefault();
+        loadPublicAnnouncements();
+      });
     }
 
     // Feed generation buttons
-    const feedButtons = document.querySelectorAll(".text-center button");
+    const feedButtons = document.querySelectorAll(
+      "#announcements-list ~ .text-center button",
+    );
     if (feedButtons.length >= 2) {
-      feedButtons[0].addEventListener("click", generateXmlFeed);
-      feedButtons[1].addEventListener("click", generateJsonFeed);
+      feedButtons[0].addEventListener("click", function () {
+        // XML
+        const start = document.getElementById("start-date")?.value;
+        const end = document.getElementById("end-date")?.value;
+        let url = "/public/api/announcements/feed?format=xml";
+        if (start) url += `&start=${encodeURIComponent(start)}`;
+        if (end) url += `&end=${encodeURIComponent(end)}`;
+        downloadFile(url, "announcements.xml");
+      });
+      feedButtons[1].addEventListener("click", function () {
+        // JSON
+        const start = document.getElementById("start-date")?.value;
+        const end = document.getElementById("end-date")?.value;
+        let url = "/public/api/announcements/feed?format=json";
+        if (start) url += `&start=${encodeURIComponent(start)}`;
+        if (end) url += `&end=${encodeURIComponent(end)}`;
+        downloadFile(url, "announcements.json");
+      });
     }
   }
 

@@ -138,13 +138,13 @@
     z-index: 10;
 }
 
-.timeline-item:last-child {
+/* .timeline-item:last-child {
     border-left: none;
-}
+} */
 
-.timeline-item:last-child::before {
+/* .timeline-item:last-child::before {
     background-color: #10b981;
-}
+} */
 
 /* Dropdown styling */
 .dropdown {

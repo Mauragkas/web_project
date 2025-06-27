@@ -19,4 +19,10 @@ router.get("/api/topics", publicController.getAvailableTopics);
 // API endpoint to get all instructors
 router.get("/api/instructors", publicController.getAllInstructors);
 
+// API endpoint to get announcements (JSON)
+router.get("/api/announcements", publicController.getAnnouncements);
+
+// API endpoint to get announcements feed (XML/JSON)
+router.get("/api/announcements/feed", publicController.getAnnouncementsFeed);
+
 module.exports = router;

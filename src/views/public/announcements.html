@@ -154,6 +154,7 @@
                         </div>
                         <div class="w-full md:w-auto pt-4 md:pt-0 self-end">
                             <button
+                                id="filter-announcements-btn"
                                 class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
                                 style="height: 42px"
                             >
@@ -174,69 +175,10 @@
                         Upcoming Presentations
                     </h2>
 
-                    <div class="timeline-item mb-8 pb-6">
-                        <div
-                            class="bg-white bg-opacity-60 p-6 rounded-md shadow-md"
-                        >
-                            <h3
-                                class="text-xl font-semibold text-indigo-700 mb-2"
-                            >
-                                [Thesis Title]
-                            </h3>
-                            <p class="text-gray-700 mt-1">
-                                <strong>Student:</strong> [Student Name]
-                            </p>
-                            <p class="text-gray-700">
-                                <strong>Supervisor:</strong> [Supervisor Name]
-                            </p>
-                            <p class="text-gray-700">
-                                <strong>Committee:</strong> [Committee Members]
-                            </p>
-                            <p class="text-gray-700 mt-3">
-                                <strong>Date:</strong> [Presentation Date]
-                            </p>
-                            <p class="text-gray-700">
-                                <strong>Time:</strong> [Presentation Time]
-                            </p>
-                            <p class="text-gray-700">
-                                <strong>Location/Link:</strong> [Examination
-                                Room or Connection Link]
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item mb-8 pb-6">
-                        <div
-                            class="bg-white bg-opacity-60 p-6 rounded-md shadow-md"
-                        >
-                            <h3
-                                class="text-xl font-semibold text-indigo-700 mb-2"
-                            >
-                                [Another Thesis Title]
-                            </h3>
-                            <p class="text-gray-700 mt-1">
-                                <strong>Student:</strong> [Another Student Name]
-                            </p>
-                            <p class="text-gray-700">
-                                <strong>Supervisor:</strong> [Another Supervisor
-                                Name]
-                            </p>
-                            <p class="text-gray-700">
-                                <strong>Committee:</strong> [Another Committee
-                                Members]
-                            </p>
-                            <p class="text-gray-700 mt-3">
-                                <strong>Date:</strong> [Another Presentation
-                                Date]
-                            </p>
-                            <p class="text-gray-700">
-                                <strong>Time:</strong> [Another Presentation
-                                Time]
-                            </p>
-                            <p class="text-gray-700">
-                                <strong>Location/Link:</strong> [Another
-                                Examination Room or Connection Link]
-                            </p>
+                    <div class="announcements-container">
+                        <!-- Announcements will be loaded here by JavaScript -->
+                        <div class="text-gray-500 text-center">
+                            Loading announcements...
                         </div>
                     </div>
 
@@ -276,17 +218,23 @@
                 // Check if user is logged in
                 checkUserLoggedIn();
 
-                // Example: Basic placeholder for filter button
-                document
-                    .querySelector(".bg-indigo-600")
-                    .addEventListener("click", function () {
-                        const startDate =
-                            document.getElementById("start-date").value;
-                        const endDate =
-                            document.getElementById("end-date").value;
-                        console.log("Filtering from", startDate, "to", endDate);
-                        // Add AJAX call here to fetch announcements based on dates
-                    });
+                // Announcements page logic
+                const currentPath = window.location.pathname;
+                if (currentPath.includes("/public/announcements")) {
+                    // Initial load
+                    loadPublicAnnouncements();
+
+                    // Filter button
+                    const filterButton = document.getElementById(
+                        "filter-announcements-btn",
+                    );
+                    if (filterButton) {
+                        filterButton.addEventListener("click", function (e) {
+                            e.preventDefault();
+                            loadPublicAnnouncements();
+                        });
+                    }
+                }
 
                 // Example: Basic placeholders for feed buttons
                 const feedButtons = document.querySelectorAll(
@@ -365,6 +313,96 @@
 
             function capitalizeFirstLetter(string) {
                 return string.charAt(0).toUpperCase() + string.slice(1);
+            }
+
+            // Load public announcements with date filter
+            async function loadPublicAnnouncements() {
+                const listDiv = document.getElementById("announcements-list");
+                if (!listDiv) return;
+
+                // Set default dates if not already set
+                const today = new Date();
+                const startDateInput = document.getElementById("start-date");
+                const endDateInput = document.getElementById("end-date");
+
+                if (startDateInput && !startDateInput.value) {
+                    startDateInput.value = today.toISOString().split("T")[0];
+                }
+
+                if (endDateInput && !endDateInput.value) {
+                    // Default end date is 30 days from today
+                    const endDate = new Date(today);
+                    endDate.setDate(today.getDate() + 30);
+                    endDateInput.value = endDate.toISOString().split("T")[0];
+                }
+
+                // Get filter values
+                const start = startDateInput ? startDateInput.value : "";
+                const end = endDateInput ? endDateInput.value : "";
+
+                // Clear the current list content and show loading state
+                const announcementsSection = listDiv.querySelector(
+                    ".announcements-container",
+                );
+                if (announcementsSection) {
+                    announcementsSection.innerHTML = `<div class="text-gray-500 text-center">Loading announcements...</div>`;
+                }
+
+                let url = "/public/api/announcements";
+                const params = [];
+                if (start) params.push(`start=${encodeURIComponent(start)}`);
+                if (end) params.push(`end=${encodeURIComponent(end)}`);
+                if (params.length) url += "?" + params.join("&");
+
+                try {
+                    const res = await fetch(url);
+                    const data = await res.json();
+
+                    if (!data.success) {
+                        if (announcementsSection) {
+                            announcementsSection.innerHTML = `<div class="text-red-500 text-center">Failed to load announcements.</div>`;
+                        }
+                        return;
+                    }
+
+                    if (
+                        !data.announcements ||
+                        data.announcements.length === 0
+                    ) {
+                        if (announcementsSection) {
+                            announcementsSection.innerHTML = `<div class="text-gray-500 text-center">No announcements found for the selected date range.</div>`;
+                        }
+                        return;
+                    }
+
+                    // Create HTML for announcements
+                    let html = "";
+                    data.announcements.forEach((a) => {
+                        html += `
+                            <div class="timeline-item mb-8 pb-6">
+                              <div class="bg-white bg-opacity-60 p-6 rounded-md shadow-md">
+                                <h3 class="text-xl font-semibold text-indigo-700 mb-2">${a.thesis_title}</h3>
+                                <p class="text-gray-700 mt-1"><strong>Student:</strong> ${a.student_name}</p>
+                                <p class="text-gray-700"><strong>Supervisor:</strong> ${a.supervisor_name}</p>
+                                <p class="text-gray-700"><strong>Committee:</strong> ${a.committee_members || "Not assigned"}</p>
+                                <p class="text-gray-700 mt-3"><strong>Date:</strong> ${a.presentation_date || "Not scheduled"}</p>
+                                <p class="text-gray-700"><strong>Time:</strong> ${a.presentation_time || "Not scheduled"}</p>
+                                <p class="text-gray-700"><strong>Location/Link:</strong> ${a.presentation_location || "Not specified"}</p>
+                              </div>
+                            </div>
+                        `;
+                    });
+
+                    // Update the announcements section
+                    if (announcementsSection) {
+                        announcementsSection.innerHTML = html;
+                    }
+                } catch (error) {
+                    console.error("Error loading announcements:", error);
+                    if (announcementsSection) {
+                        announcementsSection.innerHTML = `<div class="text-red-500 text-center">Server error. Please try again later.</div>`;
+                    }
+                }
             }
         </script>
     </body>

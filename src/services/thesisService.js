@@ -10,6 +10,7 @@ const {
   executeTransaction,
   insertThesisNote,
   getThesisNotesForInstructor,
+  getPublicPresentationAnnouncements,
 } = require("../db/database");
 
 // Helper: parse grade to number (if needed)
@@ -419,6 +420,21 @@ class ThesisService {
 
   async getPrivateNotesForInstructor(instructorId, thesisId) {
     return getThesisNotesForInstructor(thesisId, instructorId);
+  }
+  async getPublicPresentationAnnouncements({ startDate, endDate }) {
+    // Default: show next 30 days if not specified
+    const today = new Date();
+    const defaultStart = startDate || today.toISOString().slice(0, 10);
+    const defaultEnd =
+      endDate ||
+      new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
+
+    return getPublicPresentationAnnouncements({
+      startDate: defaultStart,
+      endDate: defaultEnd,
+    });
   }
 }
 

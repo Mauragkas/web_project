@@ -241,6 +241,34 @@ function getThesisNotesForInstructor(thesisId, instructorId) {
   );
 }
 
+function getPublicPresentationAnnouncements({ startDate, endDate }) {
+  // Only show completed or under examination theses with a scheduled presentation
+  let query = `
+    SELECT
+      t.id as thesis_id,
+      tt.title as thesis_title,
+      u.full_name as student_name,
+      s.full_name as supervisor_name,
+      GROUP_CONCAT(cm2.full_name, ', ') as committee_members,
+      t.presentation_date,
+      t.presentation_time,
+      t.presentation_location
+    FROM theses t
+    JOIN thesis_topics tt ON t.topic_id = tt.id
+    JOIN users u ON t.student_id = u.id
+    JOIN users s ON t.supervisor_id = s.id
+    LEFT JOIN committee_members cm ON cm.thesis_id = t.id
+    LEFT JOIN users cm2 ON cm2.id = cm.instructor_id
+    WHERE t.presentation_date IS NOT NULL
+      AND t.presentation_date >= ?
+      AND t.presentation_date <= ?
+      AND t.status IN ('Under Examination', 'Completed')
+    GROUP BY t.id
+    ORDER BY t.presentation_date ASC, t.presentation_time ASC
+  `;
+  return executeQuery(query, [startDate, endDate]);
+}
+
 module.exports = {
   executeQuery,
   executeRun,
@@ -270,4 +298,5 @@ module.exports = {
   countAcceptedCommitteeMembers,
   insertThesisNote,
   getThesisNotesForInstructor,
+  getPublicPresentationAnnouncements,
 };
