@@ -715,6 +715,7 @@ document
     }
   });
 // --- Notes logic end ---
+
 async function showThesisDetailsModal(thesisId) {
   const modal = document.getElementById("thesisDetailsModal");
   const content = document.getElementById("thesis-details-content");
@@ -767,11 +768,7 @@ async function showThesisDetailsModal(thesisId) {
         <p><span class="font-semibold">Library Link:</span> ${t.library_link ? `<a href="${t.library_link}" target="_blank" class="text-indigo-600 underline">Nemertis</a>` : "-"}</p>
         <p><span class="font-semibold">Description:</span> ${t.topic_description || "-"}</p>
         <p><span class="font-semibold">Attached File:</span> ${t.topic_document_path ? `<a href="${t.topic_document_path}" target="_blank" class="text-indigo-600 underline">PDF</a>` : "No file"}</p>
-        <div class="mt-4">
-          <button id="generateAnnouncementBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200">
-            Generate Announcement
-          </button>
-        </div>
+
         ${
           t.status === "Cancelled"
             ? `
@@ -838,47 +835,6 @@ async function showThesisDetailsModal(thesisId) {
       // Load existing notes
       loadModalThesisNotes(thesisId);
     }
-
-    // Add event listener for Generate Announcement button
-    const generateBtn = document.getElementById("generateAnnouncementBtn");
-    if (generateBtn) {
-      generateBtn.onclick = async function () {
-        // Show loading state
-        const modal = document.getElementById("announcementTextModal");
-        const textEl = document.getElementById("announcementText");
-        textEl.textContent = "Generating announcement...";
-        modal.classList.remove("hidden");
-
-        try {
-          const res = await fetch(
-            `/instructor/api/instructor/theses/${thesisId}/generate-announcement`,
-          );
-          const data = await res.json();
-          if (data.success) {
-            textEl.textContent = data.announcement;
-          } else {
-            textEl.textContent =
-              data.message || "Failed to generate announcement.";
-          }
-        } catch (err) {
-          textEl.textContent = "Server error. Please try again.";
-        }
-      };
-    }
-
-    // Close modal logic
-    document
-      .getElementById("closeAnnouncementModal")
-      ?.addEventListener("click", function () {
-        document
-          .getElementById("announcementTextModal")
-          .classList.add("hidden");
-      });
-    document
-      .getElementById("announcementTextModal")
-      ?.addEventListener("click", function (e) {
-        if (e.target === this) this.classList.add("hidden");
-      });
 
     // Add event listener for cancel button if present
     const cancelBtn = document.getElementById("cancelActiveThesisBtn");
