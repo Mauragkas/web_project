@@ -153,4 +153,11 @@ router.get(
   instructorController.getThesisNotes,
 );
 
+// API: Cancel active thesis
+router.post(
+  "/api/instructor/theses/:thesisId/cancel-active",
+  authMiddleware("instructor"),
+  instructorController.cancelActiveThesis,
+);
+
 module.exports = router;

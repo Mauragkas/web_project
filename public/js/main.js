@@ -735,6 +735,20 @@ async function showThesisDetailsModal(thesisId) {
       return;
     }
     const t = data.thesis;
+
+    // Calculate time elapsed since assignment
+    const assignedDate = new Date(t.assigned_date);
+    const currentDate = new Date();
+    const elapsedTime = currentDate - assignedDate;
+    const elapsedDays = Math.floor(elapsedTime / (1000 * 60 * 60 * 24));
+    const elapsedYears = (elapsedDays / 365).toFixed(1);
+
+    // Flag to check if cancel button should be shown (supervisor and active thesis)
+    const canCancelThesis =
+      t.status === "Active" &&
+      window.currentUserId == t.supervisor_id &&
+      elapsedDays >= 730; // 2 years (approx)
+
     content.innerHTML = `
       <div>
         <h3 class="text-xl font-semibold mb-2">${t.topic_title}</h3>
@@ -743,12 +757,40 @@ async function showThesisDetailsModal(thesisId) {
         <p><span class="font-semibold">Committee:</span> ${t.committee_members || "-"}</p>
         <p><span class="font-semibold">Status:</span> ${t.status}</p>
         <p><span class="font-semibold">Assigned Date:</span> ${t.assigned_date ? new Date(t.assigned_date).toLocaleDateString() : "-"}</p>
+        <p><span class="font-semibold">Time Elapsed:</span> ${elapsedDays} days (${elapsedYears} years)</p>
         <p><span class="font-semibold">Completion Date:</span> ${t.completion_date ? new Date(t.completion_date).toLocaleDateString() : "-"}</p>
         <p><span class="font-semibold">Grade:</span> ${t.grade || "-"}</p>
         <p><span class="font-semibold">AP Number:</span> ${t.ap_number || "-"}</p>
         <p><span class="font-semibold">Library Link:</span> ${t.library_link ? `<a href="${t.library_link}" target="_blank" class="text-indigo-600 underline">Nemertis</a>` : "-"}</p>
         <p><span class="font-semibold">Description:</span> ${t.topic_description || "-"}</p>
         <p><span class="font-semibold">Attached File:</span> ${t.topic_document_path ? `<a href="${t.topic_document_path}" target="_blank" class="text-indigo-600 underline">PDF</a>` : "No file"}</p>
+
+        ${
+          t.status === "Cancelled"
+            ? `
+          <div class="mt-4 p-4 bg-red-100 rounded-md">
+            <p><span class="font-semibold">Cancellation Date:</span> ${t.cancellation_date ? new Date(t.cancellation_date).toLocaleDateString() : "-"}</p>
+            <p><span class="font-semibold">GA Number:</span> ${t.ga_number || "-"}</p>
+            <p><span class="font-semibold">GA Year:</span> ${t.ga_year || "-"}</p>
+            <p><span class="font-semibold">Cancellation Reason:</span> ${t.cancellation_reason || "-"}</p>
+          </div>
+        `
+            : ""
+        }
+
+        ${
+          canCancelThesis
+            ? `
+          <div class="mt-6 pt-4 border-t">
+            <h4 class="text-lg font-medium mb-2">Supervisor Actions</h4>
+            <button id="cancelActiveThesisBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200">
+              Cancel Active Thesis
+            </button>
+            <p class="mt-2 text-sm text-gray-600">Note: Cancellation requires General Assembly approval and can only be done after two years.</p>
+          </div>
+        `
+            : ""
+        }
       </div>
     `;
 
@@ -774,6 +816,14 @@ async function showThesisDetailsModal(thesisId) {
 
       // Load existing notes
       loadModalThesisNotes(thesisId);
+    }
+
+    // Add event listener for cancel button if present
+    const cancelBtn = document.getElementById("cancelActiveThesisBtn");
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", function () {
+        showCancelActiveThesisModal(thesisId, t.topic_title);
+      });
     }
   } catch (err) {
     content.innerHTML = `<div class="text-red-500 text-center">Server error loading thesis details.</div>`;
@@ -1849,5 +1899,127 @@ async function loadInstructorStatistics() {
     showNoData(ctxCompletionElem, "Error loading statistics");
     showNoData(ctxGradeElem, "Error loading statistics");
     showNoData(ctxTotalElem, "Error loading statistics");
+  }
+}
+
+function showCancelActiveThesisModal(thesisId, thesisTitle) {
+  // Create modal if it doesn't exist
+  if (!document.getElementById("cancelActiveThesisModal")) {
+    const modalHTML = `
+      <div id="cancelActiveThesisModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full relative p-6">
+          <button id="closeCancelThesisModal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+          <h2 class="text-2xl font-bold mb-4 text-red-600">Cancel Active Thesis</h2>
+          <p class="mb-4 text-gray-700">You're about to cancel the thesis: <span id="cancelThesisTitle" class="font-semibold"></span></p>
+          <p class="mb-4 text-gray-700">This action requires General Assembly approval and can only be done after two years from the assignment date.</p>
+
+          <form id="cancelActiveThesisForm">
+            <input type="hidden" id="cancelThesisId" value="">
+
+            <div class="mb-4">
+              <label for="gaNumber" class="block text-gray-700 font-semibold mb-1">General Assembly Number <span class="text-red-500">*</span></label>
+              <input type="text" id="gaNumber" name="gaNumber" class="form-input" required>
+            </div>
+
+            <div class="mb-4">
+              <label for="gaYear" class="block text-gray-700 font-semibold mb-1">General Assembly Year <span class="text-red-500">*</span></label>
+              <input type="text" id="gaYear" name="gaYear" class="form-input" required>
+            </div>
+
+            <div class="mb-4">
+              <label for="cancellationReason" class="block text-gray-700 font-semibold mb-1">Additional Notes (Optional)</label>
+              <textarea id="cancellationReason" name="cancellationReason" rows="3" class="form-input"></textarea>
+            </div>
+
+            <div id="cancelThesisMessage" class="text-center text-sm font-medium hidden mb-4"></div>
+
+            <div class="flex justify-end space-x-4">
+              <button type="button" id="cancelThesisModalClose" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</button>
+              <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Confirm Cancellation</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    // Append modal to body
+    const modalContainer = document.createElement("div");
+    modalContainer.innerHTML = modalHTML;
+    document.body.appendChild(modalContainer);
+
+    // Add event listeners
+    document
+      .getElementById("closeCancelThesisModal")
+      .addEventListener("click", closeCancelThesisModal);
+    document
+      .getElementById("cancelThesisModalClose")
+      .addEventListener("click", closeCancelThesisModal);
+    document
+      .getElementById("cancelActiveThesisForm")
+      .addEventListener("submit", handleCancelActiveThesisSubmit);
+  }
+
+  // Update modal content and show it
+  document.getElementById("cancelThesisTitle").textContent = thesisTitle;
+  document.getElementById("cancelThesisId").value = thesisId;
+  document.getElementById("gaNumber").value = "";
+  document.getElementById("gaYear").value = "";
+  document.getElementById("cancellationReason").value = "";
+  document.getElementById("cancelThesisMessage").classList.add("hidden");
+
+  document.getElementById("cancelActiveThesisModal").classList.remove("hidden");
+}
+
+function closeCancelThesisModal() {
+  document.getElementById("cancelActiveThesisModal").classList.add("hidden");
+}
+
+async function handleCancelActiveThesisSubmit(e) {
+  e.preventDefault();
+
+  const thesisId = document.getElementById("cancelThesisId").value;
+  const gaNumber = document.getElementById("gaNumber").value;
+  const gaYear = document.getElementById("gaYear").value;
+  const cancellationReason =
+    document.getElementById("cancellationReason").value;
+
+  const messageElement = document.getElementById("cancelThesisMessage");
+  messageElement.classList.add("hidden");
+
+  try {
+    const response = await fetch(
+      `/instructor/api/instructor/theses/${thesisId}/cancel-active`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ gaNumber, gaYear, cancellationReason }),
+      },
+    );
+
+    const data = await response.json();
+
+    if (data.success) {
+      messageElement.textContent = "Thesis cancelled successfully!";
+      messageElement.classList.remove("hidden", "text-red-600");
+      messageElement.classList.add("text-green-600");
+
+      // Refresh the theses list or update UI
+      setTimeout(() => {
+        closeCancelThesisModal();
+        // Reload the data
+        loadInstructorTheses();
+      }, 1500);
+    } else {
+      messageElement.textContent = data.message || "Failed to cancel thesis";
+      messageElement.classList.remove("hidden", "text-green-600");
+      messageElement.classList.add("text-red-600");
+    }
+  } catch (error) {
+    console.error("Error cancelling thesis:", error);
+    messageElement.textContent = "Server error. Please try again.";
+    messageElement.classList.remove("hidden", "text-green-600");
+    messageElement.classList.add("text-red-600");
   }
 }

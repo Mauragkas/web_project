@@ -436,6 +436,57 @@ class ThesisService {
       endDate: defaultEnd,
     });
   }
+
+  async cancelThesisBySupervisor(
+    thesisId,
+    instructorId,
+    gaNumber,
+    gaYear,
+    cancellationReason,
+  ) {
+    const operations = [
+      {
+        query: `
+          UPDATE theses
+          SET status = 'Cancelled',
+              cancellation_reason = ?,
+              ga_number = ?,
+              ga_year = ?,
+              cancellation_date = CURRENT_TIMESTAMP
+          WHERE id = ? AND supervisor_id = ? AND status = 'Active'
+        `,
+        params: [cancellationReason, gaNumber, gaYear, thesisId, instructorId],
+      },
+      {
+        query: `
+          INSERT INTO thesis_status_history
+          (thesis_id, old_status, new_status, changed_by, changed_at)
+          VALUES (?, 'Active', 'Cancelled', ?, CURRENT_TIMESTAMP)
+        `,
+        params: [thesisId, `Instructor (${instructorId})`],
+      },
+    ];
+
+    const results = await executeTransaction(operations);
+    const updateResult = results[0];
+
+    if (updateResult.changes === 0) {
+      throw new Error(
+        "Failed to cancel thesis. Please check if thesis is Active and you are the supervisor.",
+      );
+    }
+
+    return { success: true };
+  }
+
+  async getThesisById(thesisId) {
+    try {
+      return await require("../db/database").getThesisById(thesisId);
+    } catch (error) {
+      console.error("Error getting thesis by ID:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new ThesisService();

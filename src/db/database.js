@@ -269,6 +269,10 @@ function getPublicPresentationAnnouncements({ startDate, endDate }) {
   return executeQuery(query, [startDate, endDate]);
 }
 
+function getThesisById(thesisId) {
+  return getOne(`SELECT * FROM theses WHERE id = ?`, [thesisId]);
+}
+
 module.exports = {
   executeQuery,
   executeRun,
@@ -299,4 +303,5 @@ module.exports = {
   insertThesisNote,
   getThesisNotesForInstructor,
   getPublicPresentationAnnouncements,
+  getThesisById,
 };

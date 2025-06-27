@@ -285,6 +285,64 @@ class InstructorService {
   async getPrivateNotesForThesis(instructorId, thesisId) {
     return thesisService.getPrivateNotesForInstructor(instructorId, thesisId);
   }
+
+  async cancelActiveThesisBySupervisor(
+    instructorId,
+    thesisId,
+    gaNumber,
+    gaYear,
+    cancellationReason,
+  ) {
+    try {
+      // Check if the thesis exists and is Active and this instructor is the supervisor
+      const thesis = await thesisService.getThesisById(thesisId);
+
+      if (!thesis) {
+        return { success: false, message: "Thesis not found" };
+      }
+
+      if (thesis.supervisor_id != instructorId) {
+        return {
+          success: false,
+          message: "You are not authorized to cancel this thesis",
+        };
+      }
+
+      if (thesis.status !== "Active") {
+        return {
+          success: false,
+          message: "Only Active theses can be cancelled",
+        };
+      }
+
+      // Check if 2 years have passed since assignment
+      const assignedDate = new Date(thesis.assigned_date);
+      const currentDate = new Date();
+      const twoYearsInMs = 2 * 365 * 24 * 60 * 60 * 1000;
+
+      if (currentDate - assignedDate < twoYearsInMs) {
+        return {
+          success: false,
+          message:
+            "Thesis can only be cancelled after two years from assignment date",
+        };
+      }
+
+      // Cancel the thesis
+      const result = await thesisService.cancelThesisBySupervisor(
+        thesisId,
+        instructorId,
+        gaNumber,
+        gaYear,
+        cancellationReason,
+      );
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error cancelling active thesis:", error);
+      return { success: false, message: "Internal server error" };
+    }
+  }
 }
 
 module.exports = new InstructorService();

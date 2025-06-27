@@ -406,6 +406,44 @@ class InstructorController {
       });
     }
   }
+
+  async cancelActiveThesis(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const thesisId = req.params.thesisId;
+      const { gaNumber, gaYear, cancellationReason } = req.body;
+
+      if (!gaNumber || !gaYear) {
+        return res.status(400).json({
+          success: false,
+          message: "General Assembly Number and Year are required",
+        });
+      }
+
+      const result = await instructorService.cancelActiveThesisBySupervisor(
+        instructorId,
+        thesisId,
+        gaNumber,
+        gaYear,
+        cancellationReason || "Cancelled by supervisor with GA approval",
+      );
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: "Thesis has been cancelled successfully",
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: result.message || "Failed to cancel thesis",
+        });
+      }
+    } catch (error) {
+      console.error("Cancel active thesis error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
 }
 
 module.exports = new InstructorController();

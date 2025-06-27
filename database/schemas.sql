@@ -36,9 +36,24 @@ CREATE TABLE IF NOT EXISTS theses (
     presentation_date DATE,
     presentation_time TIME,
     presentation_location TEXT,
+    cancellation_reason TEXT,
+    ga_number TEXT,
+    ga_year TEXT,
+    cancellation_date TIMESTAMP,
     FOREIGN KEY (topic_id) REFERENCES thesis_topics(id),
     FOREIGN KEY (student_id) REFERENCES users(id),
     FOREIGN KEY (supervisor_id) REFERENCES users(id)
+);
+
+-- Add thesis_status_history table for tracking status changes
+CREATE TABLE IF NOT EXISTS thesis_status_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    thesis_id INTEGER NOT NULL,
+    old_status TEXT NOT NULL,
+    new_status TEXT NOT NULL,
+    changed_by TEXT NOT NULL,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (thesis_id) REFERENCES theses(id)
 );
 
 -- committee_members table
