@@ -752,10 +752,114 @@ async function showThesisDetailsModal(thesisId) {
       </div>
     `;
 
-    // Load notes for this thesis
-    loadThesisNotes(thesisId);
+    // Only show notes section for "Active" theses
+    if (t.status === "Active") {
+      const notesSection = document.createElement("div");
+      notesSection.className = "mt-6 border-t pt-4";
+      notesSection.innerHTML = `
+        <h4 class="text-lg font-medium mb-2">Notes (Private)</h4>
+        <form id="modalThesisNoteForm" class="mb-4 flex flex-col md:flex-row gap-2">
+          <textarea id="modalThesisNoteText" maxlength="300" rows="2" class="border border-gray-300 p-2 rounded-md flex-1" placeholder="Add a note (max 300 characters)"></textarea>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Add Note</button>
+        </form>
+        <div id="modalThesisNotesList" class="space-y-2"></div>
+        <div id="modalThesisNoteMessage" class="text-sm mt-2"></div>
+      `;
+      content.appendChild(notesSection);
+
+      // Add event listener specifically for the modal form
+      document
+        .getElementById("modalThesisNoteForm")
+        .addEventListener("submit", handleNoteSubmit);
+
+      // Load existing notes
+      loadModalThesisNotes(thesisId);
+    }
   } catch (err) {
     content.innerHTML = `<div class="text-red-500 text-center">Server error loading thesis details.</div>`;
+  }
+}
+
+// Separate function for handling note submission from the modal
+async function handleNoteSubmit(e) {
+  e.preventDefault(); // Prevent the form from submitting traditionally
+
+  const noteText = document.getElementById("modalThesisNoteText").value.trim();
+  const thesisId = currentThesisDetailsId;
+  const messageDiv = document.getElementById("modalThesisNoteMessage");
+
+  messageDiv.textContent = "";
+
+  if (!noteText || noteText.length > 300) {
+    messageDiv.textContent = "Note must be 1-300 characters.";
+    messageDiv.className = "text-red-600";
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `/instructor/api/instructor/theses/${thesisId}/notes`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ noteText }),
+      },
+    );
+
+    const data = await res.json();
+
+    if (data.success) {
+      messageDiv.textContent = "Note recorded.";
+      messageDiv.className = "text-green-600";
+      document.getElementById("modalThesisNoteText").value = "";
+      loadModalThesisNotes(thesisId);
+    } else {
+      messageDiv.textContent = data.message || "Failed to record note.";
+      messageDiv.className = "text-red-600";
+    }
+  } catch (err) {
+    console.error("Error adding note:", err);
+    messageDiv.textContent = "Server error.";
+    messageDiv.className = "text-red-600";
+  }
+}
+
+// Load notes for the modal
+async function loadModalThesisNotes(thesisId) {
+  const notesList = document.getElementById("modalThesisNotesList");
+  if (!notesList) return;
+
+  notesList.innerHTML = '<div class="text-gray-500">Loading notes...</div>';
+
+  try {
+    const res = await fetch(
+      `/instructor/api/instructor/theses/${thesisId}/notes`,
+    );
+
+    const data = await res.json();
+
+    if (!data.success) {
+      notesList.innerHTML = `<div class="text-red-500">${data.message || "Failed to load notes"}</div>`;
+      return;
+    }
+
+    if (!data.notes || data.notes.length === 0) {
+      notesList.innerHTML = `<div class="text-gray-500">No notes yet.</div>`;
+      return;
+    }
+
+    notesList.innerHTML = data.notes
+      .map(
+        (n) =>
+          `<div class="bg-gray-100 rounded p-2 text-sm">
+            <span class="text-gray-700">${n.note_text}</span>
+            <span class="text-xs text-gray-400 float-right">${new Date(n.created_at).toLocaleString()}</span>
+          </div>`,
+      )
+      .join("");
+  } catch (err) {
+    console.error("Error loading notes:", err);
+    notesList.innerHTML = `<div class="text-red-500">Server error loading notes.</div>`;
   }
 }
 
