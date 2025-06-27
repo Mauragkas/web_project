@@ -33,6 +33,9 @@ CREATE TABLE IF NOT EXISTS theses (
     grade TEXT,
     ap_number TEXT,
     library_link TEXT,
+    presentation_date DATE,
+    presentation_time TIME,
+    presentation_location TEXT,
     FOREIGN KEY (topic_id) REFERENCES thesis_topics(id),
     FOREIGN KEY (student_id) REFERENCES users(id),
     FOREIGN KEY (supervisor_id) REFERENCES users(id)
