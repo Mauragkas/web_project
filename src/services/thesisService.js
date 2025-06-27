@@ -10,6 +10,13 @@ const {
   executeTransaction,
 } = require("../db/database");
 
+// Helper: parse grade to number (if needed)
+function parseGrade(grade) {
+  if (!grade) return null;
+  const num = parseFloat(grade);
+  return isNaN(num) ? null : num;
+}
+
 class ThesisService {
   async createThesisTopic(instructorId, title, description, documentPath) {
     const query = `
@@ -359,6 +366,37 @@ class ThesisService {
       console.error("Error getting instructors with available topics:", error);
       throw error;
     }
+  }
+
+  // For supervisor
+  async getStatisticsForSupervisor(instructorId) {
+    // Only completed theses
+    const rows = await executeQuery(
+      `SELECT
+        AVG(julianday(completion_date) - julianday(assigned_date)) as avg_completion_time,
+        AVG(CASE WHEN grade GLOB '*[0-9]*' THEN CAST(grade AS FLOAT) ELSE NULL END) as avg_grade,
+        COUNT(*) as total
+      FROM theses
+      WHERE supervisor_id = ? AND status = 'Completed'`,
+      [instructorId],
+    );
+    // Return first row or default
+    return rows[0] || { avg_completion_time: null, avg_grade: null, total: 0 };
+  }
+
+  // For committee member
+  async getStatisticsForCommitteeMember(instructorId) {
+    const rows = await executeQuery(
+      `SELECT
+        AVG(julianday(t.completion_date) - julianday(t.assigned_date)) as avg_completion_time,
+        AVG(CASE WHEN t.grade GLOB '*[0-9]*' THEN CAST(t.grade AS FLOAT) ELSE NULL END) as avg_grade,
+        COUNT(*) as total
+      FROM theses t
+      JOIN committee_members cm ON t.id = cm.thesis_id
+      WHERE cm.instructor_id = ? AND t.status = 'Completed'`,
+      [instructorId],
+    );
+    return rows[0] || { avg_completion_time: null, avg_grade: null, total: 0 };
   }
 }
 

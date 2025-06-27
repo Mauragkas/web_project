@@ -1382,3 +1382,193 @@ document.addEventListener("DOMContentLoaded", function () {
       .addEventListener("submit", assignTopic);
   }
 });
+
+// --- Instructor Statistics ---
+// Chart.js chart instances (to allow updating/destroying)
+let completionTimeChart, gradeChart, totalThesesChart;
+
+async function loadInstructorStatistics() {
+  // Get canvas contexts
+  const ctxCompletionElem = document.getElementById("completionTimeChart");
+  const ctxGradeElem = document.getElementById("gradeChart");
+  const ctxTotalElem = document.getElementById("totalThesesChart");
+
+  if (!ctxCompletionElem || !ctxGradeElem || !ctxTotalElem) return;
+
+  // Destroy previous charts if any
+  if (window.completionTimeChart) window.completionTimeChart.destroy();
+  if (window.gradeChart) window.gradeChart.destroy();
+  if (window.totalThesesChart) window.totalThesesChart.destroy();
+
+  // Helper: Show "No data" message on a canvas
+  function showNoData(canvas, message = "No data available") {
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = "bold 18px Inter, sans-serif";
+    ctx.fillStyle = "#6b7280";
+    ctx.textAlign = "center";
+    ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+  }
+
+  // Show loading
+  showNoData(ctxCompletionElem, "Loading...");
+  showNoData(ctxGradeElem, "Loading...");
+  showNoData(ctxTotalElem, "Loading...");
+
+  try {
+    const res = await fetch("/instructor/api/instructor/statistics");
+    const data = await res.json();
+    if (!data.success)
+      throw new Error(data.message || "Failed to load statistics");
+
+    const { supervisor, committee } = data.statistics;
+
+    // Prepare data (handle nulls)
+    const avgCompletionSupervisor = supervisor.avg_completion_time
+      ? Number(supervisor.avg_completion_time)
+      : null;
+    const avgCompletionCommittee = committee.avg_completion_time
+      ? Number(committee.avg_completion_time)
+      : null;
+    const avgGradeSupervisor = supervisor.avg_grade
+      ? Number(supervisor.avg_grade)
+      : null;
+    const avgGradeCommittee = committee.avg_grade
+      ? Number(committee.avg_grade)
+      : null;
+    const totalSupervisor = supervisor.total || 0;
+    const totalCommittee = committee.total || 0;
+
+    // --- Chart 1: Average Completion Time ---
+    if (avgCompletionSupervisor === null && avgCompletionCommittee === null) {
+      showNoData(ctxCompletionElem, "No completion data");
+    } else {
+      window.completionTimeChart = new Chart(ctxCompletionElem, {
+        type: "bar",
+        data: {
+          labels: ["Supervisor", "Committee Member"],
+          datasets: [
+            {
+              label: "Avg. Completion Time (days)",
+              data: [avgCompletionSupervisor ?? 0, avgCompletionCommittee ?? 0],
+              backgroundColor: ["#6366f1", "#10b981"],
+              borderRadius: 12,
+              maxBarThickness: 48,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+            datalabels: {
+              display: true,
+              color: "#374151",
+              font: { weight: "bold" },
+              anchor: "end",
+              align: "top",
+              formatter: (v) => (v ? v.toFixed(1) : "–"),
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: "Days" },
+              grid: { color: "#e5e7eb" },
+            },
+            x: {
+              grid: { display: false },
+            },
+          },
+        },
+        plugins: [ChartDataLabels],
+      });
+    }
+
+    // --- Chart 2: Average Grade ---
+    if (avgGradeSupervisor === null && avgGradeCommittee === null) {
+      showNoData(ctxGradeElem, "No grade data");
+    } else {
+      window.gradeChart = new Chart(ctxGradeElem, {
+        type: "bar",
+        data: {
+          labels: ["Supervisor", "Committee Member"],
+          datasets: [
+            {
+              label: "Avg. Grade",
+              data: [avgGradeSupervisor ?? 0, avgGradeCommittee ?? 0],
+              backgroundColor: ["#6366f1", "#10b981"],
+              borderRadius: 12,
+              maxBarThickness: 48,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+            datalabels: {
+              display: true,
+              color: "#374151",
+              font: { weight: "bold" },
+              anchor: "end",
+              align: "top",
+              formatter: (v) => (v ? v.toFixed(2) : "–"),
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: "Grade" },
+              grid: { color: "#e5e7eb" },
+            },
+            x: {
+              grid: { display: false },
+            },
+          },
+        },
+        plugins: [ChartDataLabels],
+      });
+    }
+
+    // --- Chart 3: Total Number of Theses ---
+    if (totalSupervisor === 0 && totalCommittee === 0) {
+      showNoData(ctxTotalElem, "No thesis data");
+    } else {
+      window.totalThesesChart = new Chart(ctxTotalElem, {
+        type: "doughnut",
+        data: {
+          labels: ["Supervised", "Committee Member"],
+          datasets: [
+            {
+              label: "Total Theses",
+              data: [totalSupervisor, totalCommittee],
+              backgroundColor: ["#6366f1", "#10b981"],
+              borderWidth: 2,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "bottom" },
+            tooltip: { enabled: true },
+            datalabels: {
+              display: true,
+              color: "#374151",
+              font: { weight: "bold" },
+              formatter: (v) => (v ? v : "–"),
+            },
+          },
+        },
+        plugins: [ChartDataLabels],
+      });
+    }
+  } catch (err) {
+    showNoData(ctxCompletionElem, "Error loading statistics");
+    showNoData(ctxGradeElem, "Error loading statistics");
+    showNoData(ctxTotalElem, "Error loading statistics");
+  }
+}

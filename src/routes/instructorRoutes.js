@@ -132,4 +132,11 @@ router.post(
   instructorController.respondToCommitteeInvitation,
 );
 
+// API: Get instructor statistics
+router.get(
+  "/api/instructor/statistics",
+  authMiddleware("instructor"),
+  instructorController.getInstructorStatistics,
+);
+
 module.exports = router;

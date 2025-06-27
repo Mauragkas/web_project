@@ -8,6 +8,7 @@
         <title>Instructor Dashboard</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="stylesheet" href="/css/style.css" />
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
         <script type="module" src="/js/main.js"></script>
     </head>
     <!-- <body class="animated-gradient text-gray-800"> -->
@@ -277,41 +278,17 @@
                         in.
                     </p>
                     <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div
-                            class="bg-white bg-opacity-60 p-4 rounded-md shadow-sm"
-                        >
-                            <h3 class="text-xl font-medium mb-2">
-                                Average Completion Time
-                            </h3>
-                            <div
-                                class="h-40 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-md"
-                            >
-                                Chart Placeholder
-                            </div>
+                        <div class="bg-white bg-opacity-60 p-4 rounded-md shadow-sm"></div>
+                            <h3 class="text-xl font-medium mb-2">Average Completion Time (days)</h3>
+                            <canvas id="completionTimeChart" height="120"></canvas>
                         </div>
-                        <div
-                            class="bg-white bg-opacity-60 p-4 rounded-md shadow-sm"
-                        >
-                            <h3 class="text-xl font-medium mb-2">
-                                Average Grade
-                            </h3>
-                            <div
-                                class="h-40 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-md"
-                            >
-                                Chart Placeholder
-                            </div>
+                        <div class="bg-white bg-opacity-60 p-4 rounded-md shadow-sm"></div>
+                            <h3 class="text-xl font-medium mb-2">Average Grade</h3>
+                            <canvas id="gradeChart" height="120"></canvas>
                         </div>
-                        <div
-                            class="bg-white bg-opacity-60 p-4 rounded-md col-span-1 md:col-span-2 shadow-sm"
-                        >
-                            <h3 class="text-xl font-medium mb-2">
-                                Total Number of Theses
-                            </h3>
-                            <div
-                                class="h-40 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-md"
-                            >
-                                Chart Placeholder
-                            </div>
+                        <div class="bg-white bg-opacity-60 p-4 rounded-md col-span-1 md:col-span-2 shadow-sm"></div>
+                            <h3 class="text-xl font-medium mb-2">Total Number of Theses</h3>
+                            <canvas id="totalThesesChart" height="100"></canvas>
                         </div>
                     </div>
                 </section>
@@ -399,6 +376,124 @@
                     }
                 });
             });
+
+            // Chart.js chart instances (to allow updating/destroying)
+            let completionTimeChart, gradeChart, totalThesesChart;
+
+            async function loadInstructorStatistics() {
+                // Show loading state (optional)
+                const ctxCompletion = document.getElementById('completionTimeChart').getContext('2d');
+                const ctxGrade = document.getElementById('gradeChart').getContext('2d');
+                const ctxTotal = document.getElementById('totalThesesChart').getContext('2d');
+
+                // Optionally destroy previous charts
+                if (completionTimeChart) completionTimeChart.destroy();
+                if (gradeChart) gradeChart.destroy();
+                if (totalThesesChart) totalThesesChart.destroy();
+
+                try {
+                    const res = await fetch("/instructor/api/instructor/statistics");
+                    const data = await res.json();
+                    if (!data.success) throw new Error(data.message || "Failed to load statistics");
+
+                    const { supervisor, committee } = data.statistics;
+
+                    // Prepare data (handle nulls)
+                    const avgCompletionSupervisor = supervisor.avg_completion_time ? Number(supervisor.avg_completion_time) : 0;
+                    const avgCompletionCommittee = committee.avg_completion_time ? Number(committee.avg_completion_time) : 0;
+                    const avgGradeSupervisor = supervisor.avg_grade ? Number(supervisor.avg_grade) : 0;
+                    const avgGradeCommittee = committee.avg_grade ? Number(committee.avg_grade) : 0;
+                    const totalSupervisor = supervisor.total || 0;
+                    const totalCommittee = committee.total || 0;
+
+                    // --- Chart 1: Average Completion Time ---
+                    completionTimeChart = new Chart(ctxCompletion, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Supervisor', 'Committee Member'],
+                            datasets: [{
+                                label: 'Avg. Completion Time (days)',
+                                data: [avgCompletionSupervisor, avgCompletionCommittee],
+                                backgroundColor: ['#6366f1', '#10b981'],
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { enabled: true }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: { display: true, text: 'Days' }
+                                }
+                            }
+                        }
+                    });
+
+                    // --- Chart 2: Average Grade ---
+                    gradeChart = new Chart(ctxGrade, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Supervisor', 'Committee Member'],
+                            datasets: [{
+                                label: 'Avg. Grade',
+                                data: [avgGradeSupervisor, avgGradeCommittee],
+                                backgroundColor: ['#6366f1', '#10b981'],
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { enabled: true }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: { display: true, text: 'Grade' }
+                                }
+                            }
+                        }
+                    });
+
+                    // --- Chart 3: Total Number of Theses ---
+                    totalThesesChart = new Chart(ctxTotal, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Supervised', 'Committee Member'],
+                            datasets: [{
+                                label: 'Total Theses',
+                                data: [totalSupervisor, totalCommittee],
+                                backgroundColor: ['#6366f1', '#10b981'],
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'bottom' },
+                                tooltip: { enabled: true }
+                            }
+                        }
+                    });
+
+                } catch (err) {
+                    // Show error on charts
+                    ctxCompletion.font = "16px sans-serif";
+                    ctxCompletion.fillText("Error loading statistics", 10, 50);
+                    ctxGrade.font = "16px sans-serif";
+                    ctxGrade.fillText("Error loading statistics", 10, 50);
+                    ctxTotal.font = "16px sans-serif";
+                    ctxTotal.fillText("Error loading statistics", 10, 50);
+                }
+            }
+
+            // Call this when the statistics section is shown, e.g.:
+            if (window.location.pathname === "/instructor/dashboard") {
+                loadInstructorStatistics();
+            }
+            // Or, if you use navigation tabs, call loadInstructorStatistics() when "View Statistics" is selected.
         </script>
         <!-- Edit Topic Modal -->
         <div
@@ -429,7 +524,7 @@
                         name="existingDocumentPath"
                     />
                     <div>
-                        <label for="edit-title" class="block font-semibold mb-1"
+</div>                        <label for="edit-title" class="block font-semibold mb-1"
                             >Title</label
                         >
                         <input
@@ -442,7 +537,7 @@
                     </div>
                     <div>
                         <label
-                            for="edit-description"
+</div>                            for="edit-description"
                             class="block font-semibold mb-1"
                             >Description</label
                         >
@@ -456,7 +551,7 @@
                     </div>
                     <div>
                         <label
-                            for="edit-document"
+</div>                            for="edit-document"
                             class="block font-semibold mb-1"
                             >Replace PDF (optional)</label
                         >

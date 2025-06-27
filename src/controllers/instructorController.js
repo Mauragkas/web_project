@@ -348,6 +348,18 @@ class InstructorController {
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }
+
+  async getInstructorStatistics(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const stats =
+        await instructorService.retrieveInstructorStatistics(instructorId);
+      return res.json({ success: true, statistics: stats });
+    } catch (error) {
+      console.error("Get instructor statistics error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
 }
 
 module.exports = new InstructorController();

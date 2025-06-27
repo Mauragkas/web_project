@@ -260,6 +260,20 @@ class InstructorService {
       thesisFinalized,
     };
   }
+
+  async retrieveInstructorStatistics(instructorId) {
+    // Get stats for supervised theses
+    const supervisorStats =
+      await thesisService.getStatisticsForSupervisor(instructorId);
+    // Get stats for committee member theses
+    const committeeStats =
+      await thesisService.getStatisticsForCommitteeMember(instructorId);
+
+    return {
+      supervisor: supervisorStats,
+      committee: committeeStats,
+    };
+  }
 }
 
 module.exports = new InstructorService();
