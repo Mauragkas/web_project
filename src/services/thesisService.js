@@ -523,6 +523,32 @@ class ThesisService {
 
     return { success: true };
   }
+
+  async getPresentationDetailsForAnnouncement(thesisId) {
+    // Get all needed info for the announcement
+    const rows = await executeQuery(
+      `
+      SELECT
+        t.presentation_date,
+        t.presentation_time,
+        t.presentation_location,
+        tt.title as thesis_title,
+        u.full_name as student_name,
+        s.full_name as supervisor_name,
+        GROUP_CONCAT(cm2.full_name, ', ') as committee_members
+      FROM theses t
+      JOIN thesis_topics tt ON t.topic_id = tt.id
+      JOIN users u ON t.student_id = u.id
+      JOIN users s ON t.supervisor_id = s.id
+      LEFT JOIN committee_members cm ON cm.thesis_id = t.id
+      LEFT JOIN users cm2 ON cm2.id = cm.instructor_id
+      WHERE t.id = ?
+      GROUP BY t.id
+      `,
+      [thesisId],
+    );
+    return rows[0] || null;
+  }
 }
 
 module.exports = new ThesisService();

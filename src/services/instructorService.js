@@ -362,6 +362,56 @@ class InstructorService {
       instructorId,
     );
   }
+
+  async preparePresentationAnnouncement(instructorId, thesisId) {
+    // 1. Get thesis details and check permissions
+    const thesis = await require("./thesisService").getThesisById(thesisId);
+    if (!thesis) {
+      return { success: false, message: "Thesis not found" };
+    }
+    if (thesis.supervisor_id != instructorId) {
+      return {
+        success: false,
+        message: "You are not the supervisor of this thesis",
+      };
+    }
+    if (thesis.status !== "Under Examination") {
+      return { success: false, message: "Thesis is not under examination" };
+    }
+
+    // 2. Get presentation details (student, topic, committee, date/time/location)
+    const details =
+      await require("./thesisService").getPresentationDetailsForAnnouncement(
+        thesisId,
+      );
+    if (!details) {
+      return { success: false, message: "Presentation details not found" };
+    }
+
+    // 3. Validate required fields
+    if (
+      !details.presentation_date ||
+      !details.presentation_time ||
+      !details.presentation_location
+    ) {
+      return { success: false, message: "Presentation details are incomplete" };
+    }
+
+    // 4. Compose announcement text
+    const announcement = `Thesis Presentation Announcement
+
+  Student: ${details.student_name}
+  Thesis Title: ${details.thesis_title}
+  Supervisor: ${details.supervisor_name}
+  Committee: ${details.committee_members || "Not assigned"}
+  Date: ${details.presentation_date}
+  Time: ${details.presentation_time}
+  Location: ${details.presentation_location}
+
+  You are invited to attend the thesis presentation.`;
+
+    return { success: true, announcement };
+  }
 }
 
 module.exports = new InstructorService();

@@ -471,6 +471,29 @@ class InstructorController {
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }
+
+  async generatePresentationAnnouncement(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const thesisId = req.params.thesisId;
+
+      const result = await instructorService.preparePresentationAnnouncement(
+        instructorId,
+        thesisId,
+      );
+
+      if (!result.success) {
+        return res
+          .status(400)
+          .json({ success: false, message: result.message });
+      }
+
+      return res.json({ success: true, announcement: result.announcement });
+    } catch (error) {
+      console.error("Generate announcement error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
 }
 
 module.exports = new InstructorController();
