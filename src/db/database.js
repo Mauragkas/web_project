@@ -222,6 +222,25 @@ function countAcceptedCommitteeMembers(thesisId) {
   );
 }
 
+// Add a private note to a thesis
+function insertThesisNote(thesisId, instructorId, noteText) {
+  return executeRun(
+    `INSERT INTO thesis_notes (thesis_id, instructor_id, note_text) VALUES (?, ?, ?)`,
+    [thesisId, instructorId, noteText],
+  );
+}
+
+// Get all notes for a thesis by this instructor
+function getThesisNotesForInstructor(thesisId, instructorId) {
+  return executeQuery(
+    `SELECT id, note_text, created_at
+     FROM thesis_notes
+     WHERE thesis_id = ? AND instructor_id = ?
+     ORDER BY created_at DESC`,
+    [thesisId, instructorId],
+  );
+}
+
 module.exports = {
   executeQuery,
   executeRun,
@@ -249,4 +268,6 @@ module.exports = {
   getCommitteeInvitationById,
   updateCommitteeInvitationStatus,
   countAcceptedCommitteeMembers,
+  insertThesisNote,
+  getThesisNotesForInstructor,
 };

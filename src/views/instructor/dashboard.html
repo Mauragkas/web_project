@@ -336,22 +336,20 @@
                             >
                                 Record Grade
                             </button>
+                            <!-- Notes Section (Private) -->
                             <div class="mt-4">
-                                <h4 class="text-lg font-medium mb-2">Notes</h4>
-                                <textarea
-                                    class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"
-                                    rows="3"
-                                    placeholder="Add a note (max 300 characters)"
-                                ></textarea>
-                                <button
-                                    class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1 px-3 rounded-lg shadow-md text-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
-                                >
-                                    Add Note
+                              <h4 class="text-lg font-medium mb-2">Notes (Private)</h4>
+                              <form id="addThesisNoteForm" class="mb-4 flex flex-col md:flex-row gap-2">
+                                <textarea id="thesisNoteText" maxlength="300" rows="2"
+                                  class="border border-gray-300 p-2 rounded-md flex-1"
+                                  placeholder="Add a note (max 300 characters)"></textarea>
+                                <button type="submit"
+                                  class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md">
+                                  Add Note
                                 </button>
-                                <div class="mt-2 text-sm text-gray-700">
-                                    <p>Note 1: [Note content] - [Date]</p>
-                                    <p>Note 2: [Note content] - [Date]</p>
-                                </div>
+                              </form>
+                              <div id="thesisNotesList" class="space-y-2"></div>
+                              <div id="thesisNoteMessage" class="text-sm mt-2"></div>
                             </div>
                         </div>
                     </div>
@@ -524,7 +522,7 @@
                         name="existingDocumentPath"
                     />
                     <div>
-</div>                        <label for="edit-title" class="block font-semibold mb-1"
+<label for="edit-title" class="block font-semibold mb-1"
                             >Title</label
                         >
                         <input
@@ -537,7 +535,7 @@
                     </div>
                     <div>
                         <label
-</div>                            for="edit-description"
+                            for="edit-description"
                             class="block font-semibold mb-1"
                             >Description</label
                         >
@@ -550,8 +548,7 @@
                         ></textarea>
                     </div>
                     <div>
-                        <label
-</div>                            for="edit-document"
+                        <label                            for="edit-document"
                             class="block font-semibold mb-1"
                             >Replace PDF (optional)</label
                         >

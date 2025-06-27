@@ -8,6 +8,8 @@ const {
   getThesisTopicByIdAndInstructor,
   updateThesisTopic,
   executeTransaction,
+  insertThesisNote,
+  getThesisNotesForInstructor,
 } = require("../db/database");
 
 // Helper: parse grade to number (if needed)
@@ -397,6 +399,26 @@ class ThesisService {
       [instructorId],
     );
     return rows[0] || { avg_completion_time: null, avg_grade: null, total: 0 };
+  }
+  async savePrivateNote(instructorId, thesisId, noteText) {
+    // Check if instructor is supervisor or committee member for this thesis and thesis is Active
+    const thesis = await getOne(
+      `SELECT t.id, t.status
+         FROM theses t
+         LEFT JOIN committee_members cm ON cm.thesis_id = t.id
+         WHERE t.id = ? AND (t.supervisor_id = ? OR cm.instructor_id = ?)
+         GROUP BY t.id`,
+      [thesisId, instructorId, instructorId],
+    );
+    if (!thesis) throw new Error("Access denied or thesis not found");
+    if (thesis.status !== "Active") throw new Error("Thesis is not Active");
+
+    // Insert note
+    return insertThesisNote(thesisId, instructorId, noteText);
+  }
+
+  async getPrivateNotesForInstructor(instructorId, thesisId) {
+    return getThesisNotesForInstructor(thesisId, instructorId);
   }
 }
 

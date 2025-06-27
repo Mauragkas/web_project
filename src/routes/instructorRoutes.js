@@ -139,4 +139,18 @@ router.get(
   instructorController.getInstructorStatistics,
 );
 
+// Add thesis note (POST)
+router.post(
+  "/api/instructor/theses/:thesisId/notes",
+  authMiddleware("instructor"),
+  instructorController.addThesisNote,
+);
+
+// Get thesis notes (GET)
+router.get(
+  "/api/instructor/theses/:thesisId/notes",
+  authMiddleware("instructor"),
+  instructorController.getThesisNotes,
+);
+
 module.exports = router;

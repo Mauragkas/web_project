@@ -360,6 +360,52 @@ class InstructorController {
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }
+
+  // POST /api/instructor/theses/:thesisId/notes
+  async addThesisNote(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const thesisId = req.params.thesisId;
+      const { noteText } = req.body;
+
+      if (!noteText || noteText.length > 300) {
+        return res.status(400).json({
+          success: false,
+          message: "Note must be 1-300 characters",
+        });
+      }
+
+      await instructorService.recordPrivateThesisNote(
+        instructorId,
+        thesisId,
+        noteText,
+      );
+      return res.json({ success: true, message: "Note recorded" });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message || "Failed to record note",
+      });
+    }
+  }
+
+  // GET /api/instructor/theses/:thesisId/notes
+  async getThesisNotes(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const thesisId = req.params.thesisId;
+      const notes = await instructorService.getPrivateNotesForThesis(
+        instructorId,
+        thesisId,
+      );
+      return res.json({ success: true, notes });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message || "Failed to fetch notes",
+      });
+    }
+  }
 }
 
 module.exports = new InstructorController();

@@ -49,3 +49,14 @@ CREATE TABLE IF NOT EXISTS committee_members (
     FOREIGN KEY (thesis_id) REFERENCES theses(id),
     FOREIGN KEY (instructor_id) REFERENCES users(id)
 );
+
+-- thesis_notes table
+CREATE TABLE IF NOT EXISTS thesis_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    thesis_id INTEGER NOT NULL,
+    instructor_id INTEGER NOT NULL,
+    note_text TEXT NOT NULL CHECK(length(note_text) <= 300),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (thesis_id) REFERENCES theses(id),
+    FOREIGN KEY (instructor_id) REFERENCES users(id)
+);

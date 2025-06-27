@@ -571,11 +571,88 @@ async function loadInstructorTheses() {
 }
 
 // ---- Modal for Instructor Thesis Details ----
+// --- Notes logic start ---
+async function loadThesisNotes(thesisId) {
+  const notesList = document.getElementById("thesisNotesList");
+  if (!notesList) return;
+  notesList.innerHTML = '<div class="text-gray-500">Loading notes...</div>';
+  try {
+    const res = await fetch(
+      `/instructor/api/instructor/theses/${thesisId}/notes`,
+    );
+    const data = await res.json();
+    if (!data.success) {
+      notesList.innerHTML = `<div class="text-red-500">${data.message || "Failed to load notes"}</div>`;
+      return;
+    }
+    if (!data.notes.length) {
+      notesList.innerHTML = `<div class="text-gray-500">No notes yet.</div>`;
+      return;
+    }
+    notesList.innerHTML = data.notes
+      .map(
+        (n) =>
+          `<div class="bg-gray-100 rounded p-2 text-sm">
+            <span class="text-gray-700">${n.note_text}</span>
+            <span class="text-xs text-gray-400 float-right">${new Date(n.created_at).toLocaleString()}</span>
+          </div>`,
+      )
+      .join("");
+  } catch (err) {
+    notesList.innerHTML = `<div class="text-red-500">Server error loading notes.</div>`;
+  }
+}
+
+// We'll store the current thesisId for the modal context
+let currentThesisDetailsId = null;
+
+document
+  .getElementById("addThesisNoteForm")
+  ?.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const noteText = document.getElementById("thesisNoteText").value.trim();
+    const thesisId = currentThesisDetailsId;
+    const messageDiv = document.getElementById("thesisNoteMessage");
+    messageDiv.textContent = "";
+    if (!noteText || noteText.length > 300) {
+      messageDiv.textContent = "Note must be 1-300 characters.";
+      messageDiv.className = "text-red-600";
+      return;
+    }
+    try {
+      const res = await fetch(
+        `/instructor/api/instructor/theses/${thesisId}/notes`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ noteText }),
+        },
+      );
+      const data = await res.json();
+      if (data.success) {
+        messageDiv.textContent = "Note recorded.";
+        messageDiv.className = "text-green-600";
+        document.getElementById("thesisNoteText").value = "";
+        loadThesisNotes(thesisId);
+      } else {
+        messageDiv.textContent = data.message || "Failed to record note.";
+        messageDiv.className = "text-red-600";
+      }
+    } catch (err) {
+      messageDiv.textContent = "Server error.";
+      messageDiv.className = "text-red-600";
+    }
+  });
+// --- Notes logic end ---
+
 async function showThesisDetailsModal(thesisId) {
   const modal = document.getElementById("thesisDetailsModal");
   const content = document.getElementById("thesis-details-content");
   modal.classList.remove("hidden");
   content.innerHTML = '<div class="text-center text-gray-500">Loading...</div>';
+
+  // Store the current thesisId for notes context
+  currentThesisDetailsId = thesisId;
 
   try {
     const res = await fetch(
@@ -603,6 +680,9 @@ async function showThesisDetailsModal(thesisId) {
         <p><span class="font-semibold">Attached File:</span> ${t.topic_document_path ? `<a href="${t.topic_document_path}" target="_blank" class="text-indigo-600 underline">PDF</a>` : "No file"}</p>
       </div>
     `;
+
+    // Load notes for this thesis
+    loadThesisNotes(thesisId);
   } catch (err) {
     content.innerHTML = `<div class="text-red-500 text-center">Server error loading thesis details.</div>`;
   }

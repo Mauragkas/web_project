@@ -274,6 +274,17 @@ class InstructorService {
       committee: committeeStats,
     };
   }
+
+  async recordPrivateThesisNote(instructorId, thesisId, noteText) {
+    // Validate note length
+    if (!noteText || noteText.length > 300)
+      throw new Error("Note must be 1-300 characters");
+    return thesisService.savePrivateNote(instructorId, thesisId, noteText);
+  }
+
+  async getPrivateNotesForThesis(instructorId, thesisId) {
+    return thesisService.getPrivateNotesForInstructor(instructorId, thesisId);
+  }
 }
 
 module.exports = new InstructorService();
