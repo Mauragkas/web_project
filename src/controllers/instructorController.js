@@ -471,6 +471,61 @@ class InstructorController {
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }
+  // GET /api/instructor/theses/:thesisId/announcement-text
+  async generateAnnouncementText(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const thesisId = req.params.thesisId;
+      const text =
+        await require("../services/instructorService").generateThesisAnnouncement(
+          instructorId,
+          thesisId,
+        );
+      return res.json({ success: true, announcementText: text });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message || "Failed to generate announcement text",
+      });
+    }
+  }
+
+  async setPresentationDetails(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const thesisId = req.params.thesisId;
+      const { presentationDate, presentationTime, presentationLocation } =
+        req.body;
+
+      if (!presentationDate || !presentationTime || !presentationLocation) {
+        return res.status(400).json({
+          success: false,
+          message: "All presentation details are required",
+        });
+      }
+
+      const result = await instructorService.setPresentationDetails(
+        instructorId,
+        thesisId,
+        { presentationDate, presentationTime, presentationLocation },
+      );
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: "Presentation details set successfully",
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: result.message || "Failed to set presentation details",
+        });
+      }
+    } catch (error) {
+      console.error("Set presentation details error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
 }
 
 module.exports = new InstructorController();

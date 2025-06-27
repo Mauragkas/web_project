@@ -362,6 +362,103 @@ class InstructorService {
       instructorId,
     );
   }
+  async generateThesisAnnouncement(instructorId, thesisId) {
+    // Get all details
+    const details =
+      await require("./thesisService").retrievePresentationDetailsForAnnouncement(
+        thesisId,
+        instructorId,
+      );
+    if (!details) {
+      throw new Error(
+        "Announcement cannot be generated. Make sure the thesis is 'Under Examination', you are the supervisor, and all presentation details are filled.",
+      );
+    }
+
+    // Format the announcement text
+    // You can adjust the template as needed
+    const {
+      thesis_title,
+      student_name,
+      presentation_date,
+      presentation_time,
+      presentation_location,
+      supervisor_name,
+    } = details;
+
+    if (!presentation_date || !presentation_time || !presentation_location) {
+      throw new Error(
+        "Presentation details are incomplete. Please ensure date, time, and location are set.",
+      );
+    }
+
+    // Format date/time for display
+    const dateStr = new Date(presentation_date).toLocaleDateString();
+    const timeStr = presentation_time;
+
+    const announcement = `Thesis Presentation Announcement
+
+  Title: ${thesis_title}
+  Student: ${student_name}
+  Supervisor: ${supervisor_name}
+  Date: ${dateStr}
+  Time: ${timeStr}
+  Location: ${presentation_location}
+
+  We invite you to attend the thesis presentation of ${student_name} on "${thesis_title}", supervised by ${supervisor_name}, scheduled for ${dateStr} at ${timeStr} in ${presentation_location}.`;
+
+    return announcement;
+  }
+
+  async setPresentationDetails(instructorId, thesisId, details) {
+    try {
+      // Verify the instructor is the supervisor and thesis is Under Examination
+      const thesis = await thesisService.getThesisById(thesisId);
+
+      if (!thesis) {
+        return { success: false, message: "Thesis not found" };
+      }
+
+      if (thesis.supervisor_id != instructorId) {
+        return {
+          success: false,
+          message: "You are not the supervisor of this thesis",
+        };
+      }
+
+      if (thesis.status !== "Under Examination") {
+        return {
+          success: false,
+          message: "Thesis must be in 'Under Examination' status",
+        };
+      }
+
+      // Update presentation details
+      const result = await require("../db/database").executeRun(
+        `UPDATE theses
+         SET presentation_date = ?, presentation_time = ?, presentation_location = ?
+         WHERE id = ?`,
+        [
+          details.presentationDate,
+          details.presentationTime,
+          details.presentationLocation,
+          thesisId,
+        ],
+      );
+
+      if (result.changes > 0) {
+        return { success: true };
+      } else {
+        return {
+          success: false,
+          message: "Failed to update presentation details",
+        };
+      }
+    } catch (error) {
+      console.error("Error setting presentation details:", error);
+      return { success: false, message: "Internal server error" };
+    }
+  }
 }
 
 module.exports = new InstructorService();

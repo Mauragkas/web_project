@@ -809,6 +809,109 @@ async function showThesisDetailsModal(thesisId) {
         `
             : ""
         }
+
+        ${
+          t.status === "Under Examination" &&
+          window.currentUserId == t.supervisor_id
+            ? `
+    <div class="mt-6 pt-4 border-t">
+      <h4 class="text-lg font-medium mb-2">Presentation Management</h4>
+
+      ${
+        !t.presentation_date || !t.presentation_time || !t.presentation_location
+          ? `
+          <!-- Set Presentation Details Form -->
+          <div id="presentation-details-form" class="mb-4">
+            <h5 class="font-medium mb-3">Set Presentation Details</h5>
+            <form id="setPresentationDetailsForm" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="presentationDate" class="block text-sm font-medium text-gray-700 mb-1">
+                    Presentation Date <span class="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    id="presentationDate"
+                    name="presentationDate"
+                    value="${t.presentation_date || ""}"
+                    required
+                    class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label for="presentationTime" class="block text-sm font-medium text-gray-700 mb-1">
+                    Presentation Time <span class="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    id="presentationTime"
+                    name="presentationTime"
+                    value="${t.presentation_time || ""}"
+                    required
+                    class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label for="presentationLocation" class="block text-sm font-medium text-gray-700 mb-1">
+                  Presentation Location <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="presentationLocation"
+                  name="presentationLocation"
+                  value="${t.presentation_location || ""}"
+                  placeholder="e.g., Room A102, Engineering Building"
+                  required
+                  class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div id="presentationDetailsMessage" class="text-sm hidden"></div>
+              <button
+                type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200"
+              >
+                Set Presentation Details
+              </button>
+            </form>
+          </div>
+          `
+          : `
+          <!-- Show existing presentation details -->
+          <div class="mb-4 p-4 bg-blue-50 rounded-md">
+            <h5 class="font-medium mb-2">Current Presentation Details</h5>
+            <p><strong>Date:</strong> ${new Date(t.presentation_date).toLocaleDateString()}</p>
+            <p><strong>Time:</strong> ${t.presentation_time}</p>
+            <p><strong>Location:</strong> ${t.presentation_location}</p>
+            <button
+              id="editPresentationDetailsBtn"
+              class="mt-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded text-sm"
+            >
+              Edit Details
+            </button>
+          </div>
+
+          <!-- Generate Announcement Button -->
+          <button
+            id="generateAnnouncementBtn"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 mb-4"
+          >
+            Generate Announcement Text
+          </button>
+          <div id="announcementTextContainer" class="hidden mt-4">
+            <textarea
+              id="announcementText"
+              class="w-full p-3 border border-gray-300 rounded-md bg-gray-50"
+              rows="7"
+              readonly
+            ></textarea>
+          </div>
+          `
+      }
+    </div>
+    `
+            : ""
+        }
       </div>
     `;
 
@@ -834,6 +937,109 @@ async function showThesisDetailsModal(thesisId) {
 
       // Load existing notes
       loadModalThesisNotes(thesisId);
+    }
+
+    // --- Presentation Details Form and Announcement Button Logic ---
+    if (
+      t.status === "Under Examination" &&
+      window.currentUserId == t.supervisor_id
+    ) {
+      // Handle setting presentation details
+      const setPresentationForm = document.getElementById(
+        "setPresentationDetailsForm",
+      );
+      if (setPresentationForm) {
+        setPresentationForm.addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(e.target);
+          const presentationDetails = {
+            presentationDate: formData.get("presentationDate"),
+            presentationTime: formData.get("presentationTime"),
+            presentationLocation: formData.get("presentationLocation"),
+          };
+
+          const messageEl = document.getElementById(
+            "presentationDetailsMessage",
+          );
+          messageEl.classList.add("hidden");
+
+          try {
+            const response = await fetch(
+              `/instructor/api/instructor/theses/${thesisId}/presentation-details`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(presentationDetails),
+              },
+            );
+
+            const data = await response.json();
+
+            if (data.success) {
+              messageEl.textContent =
+                "Presentation details saved successfully!";
+              messageEl.classList.remove("hidden", "text-red-600");
+              messageEl.classList.add("text-green-600");
+
+              // Refresh the modal to show the generate button
+              setTimeout(() => {
+                showThesisDetailsModal(thesisId);
+              }, 1500);
+            } else {
+              messageEl.textContent =
+                data.message || "Failed to save presentation details";
+              messageEl.classList.remove("hidden", "text-green-600");
+              messageEl.classList.add("text-red-600");
+            }
+          } catch (error) {
+            messageEl.textContent = "Server error. Please try again.";
+            messageEl.classList.remove("hidden", "text-green-600");
+            messageEl.classList.add("text-red-600");
+          }
+        });
+      }
+
+      // Handle editing existing presentation details
+      const editBtn = document.getElementById("editPresentationDetailsBtn");
+      if (editBtn) {
+        editBtn.addEventListener("click", function () {
+          // Show the form again with current values
+          showThesisDetailsModal(thesisId);
+        });
+      }
+
+      // Handle generate announcement (existing code)
+      const generateBtn = document.getElementById("generateAnnouncementBtn");
+      if (generateBtn) {
+        const container = document.getElementById("announcementTextContainer");
+        const textarea = document.getElementById("announcementText");
+        generateBtn.onclick = async function () {
+          generateBtn.disabled = true;
+          generateBtn.textContent = "Generating...";
+          try {
+            const res = await fetch(
+              `/instructor/api/instructor/theses/${thesisId}/announcement-text`,
+            );
+            const data = await res.json();
+            if (data.success) {
+              textarea.value = data.announcementText;
+              container.classList.remove("hidden");
+            } else {
+              textarea.value =
+                data.message || "Failed to generate announcement.";
+              container.classList.remove("hidden");
+            }
+          } catch (err) {
+            textarea.value = "Server error. Please try again.";
+            container.classList.remove("hidden");
+          }
+          generateBtn.disabled = false;
+          generateBtn.textContent = "Generate Announcement Text";
+        };
+      }
     }
 
     // Add event listener for cancel button if present

@@ -273,6 +273,28 @@ function getThesisById(thesisId) {
   return getOne(`SELECT * FROM theses WHERE id = ?`, [thesisId]);
 }
 
+function getThesisPresentationDetailsForAnnouncement(thesisId, instructorId) {
+  const query = `
+    SELECT
+      t.id as thesis_id,
+      tt.title as thesis_title,
+      u.full_name as student_name,
+      t.presentation_date,
+      t.presentation_time,
+      t.presentation_location,
+      s.full_name as supervisor_name
+    FROM theses t
+    JOIN thesis_topics tt ON t.topic_id = tt.id
+    JOIN users u ON t.student_id = u.id
+    JOIN users s ON t.supervisor_id = s.id
+    WHERE t.id = ?
+      AND t.status = 'Under Examination'
+      AND t.supervisor_id = ?
+    LIMIT 1
+  `;
+  return getOne(query, [thesisId, instructorId]);
+}
+
 module.exports = {
   executeQuery,
   executeRun,
@@ -304,4 +326,5 @@ module.exports = {
   getThesisNotesForInstructor,
   getPublicPresentationAnnouncements,
   getThesisById,
+  getThesisPresentationDetailsForAnnouncement,
 };

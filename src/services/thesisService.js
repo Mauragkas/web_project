@@ -11,6 +11,7 @@ const {
   insertThesisNote,
   getThesisNotesForInstructor,
   getPublicPresentationAnnouncements,
+  getThesisPresentationDetailsForAnnouncement,
 } = require("../db/database");
 
 // Helper: parse grade to number (if needed)
@@ -522,6 +523,9 @@ class ThesisService {
     }
 
     return { success: true };
+  }
+  async retrievePresentationDetailsForAnnouncement(thesisId, instructorId) {
+    return getThesisPresentationDetailsForAnnouncement(thesisId, instructorId);
   }
 }
 

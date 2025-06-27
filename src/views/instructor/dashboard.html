@@ -384,6 +384,30 @@
                                 ></div>
                             </div>
                         </div>
+                        <!-- Announcement Section (hidden by default, shown only if status is Under Examination) -->
+                        <div
+                            id="announcement-section"
+                            class="mt-6 pt-4 border-t hidden"
+                        >
+                            <button
+                                id="generateAnnouncementBtn"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200"
+                                style="margin-bottom: 1rem"
+                            >
+                                Generate Announcement Text
+                            </button>
+                            <div
+                                id="announcementTextContainer"
+                                class="hidden mt-4"
+                            >
+                                <textarea
+                                    id="announcementText"
+                                    class="w-full p-3 border border-gray-300 rounded-md bg-gray-50"
+                                    rows="7"
+                                    readonly
+                                ></textarea>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </main>

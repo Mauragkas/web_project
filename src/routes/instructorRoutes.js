@@ -167,4 +167,16 @@ router.post(
   instructorController.changeStatusToUnderExamination,
 );
 
+router.get(
+  "/api/instructor/theses/:thesisId/announcement-text",
+  authMiddleware("instructor"),
+  instructorController.generateAnnouncementText,
+);
+
+router.post(
+  "/api/instructor/theses/:thesisId/presentation-details",
+  authMiddleware("instructor"),
+  instructorController.setPresentationDetails,
+);
+
 module.exports = router;
