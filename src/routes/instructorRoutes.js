@@ -160,4 +160,11 @@ router.post(
   instructorController.cancelActiveThesis,
 );
 
+// API: Change status to Under Examination
+router.post(
+  "/api/instructor/theses/:thesisId/change-status-under-examination",
+  authMiddleware("instructor"),
+  instructorController.changeStatusToUnderExamination,
+);
+
 module.exports = router;

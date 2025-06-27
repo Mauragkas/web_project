@@ -444,6 +444,33 @@ class InstructorController {
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }
+
+  async changeStatusToUnderExamination(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const thesisId = req.params.thesisId;
+
+      const result = await instructorService.changeStatusToUnderExamination(
+        instructorId,
+        thesisId,
+      );
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: "Thesis status changed to Under Examination.",
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: result.message || "Failed to change status.",
+        });
+      }
+    } catch (error) {
+      console.error("Change status to Under Examination error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
 }
 
 module.exports = new InstructorController();

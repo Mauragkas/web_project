@@ -487,6 +487,42 @@ class ThesisService {
       throw error;
     }
   }
+
+  async changeStatusToUnderExamination(thesisId, instructorId) {
+    // Transaction: update status and insert into status history
+    const operations = [
+      {
+        query: `
+          UPDATE theses
+          SET status = 'Under Examination'
+          WHERE id = ? AND supervisor_id = ? AND status = 'Active'
+        `,
+        params: [thesisId, instructorId],
+      },
+      {
+        query: `
+          INSERT INTO thesis_status_history
+          (thesis_id, old_status, new_status, changed_by, changed_at)
+          VALUES (?, 'Active', 'Under Examination', ?, CURRENT_TIMESTAMP)
+        `,
+        params: [thesisId, `Instructor (${instructorId})`],
+      },
+    ];
+
+    const results =
+      await require("../db/database").executeTransaction(operations);
+    const updateResult = results[0];
+
+    if (updateResult.changes === 0) {
+      return {
+        success: false,
+        message:
+          "Failed to change status. Please check if thesis is Active and you are the supervisor.",
+      };
+    }
+
+    return { success: true };
+  }
 }
 
 module.exports = new ThesisService();

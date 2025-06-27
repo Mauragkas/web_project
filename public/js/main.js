@@ -749,6 +749,10 @@ async function showThesisDetailsModal(thesisId) {
       window.currentUserId == t.supervisor_id &&
       elapsedDays >= 730; // 2 years (approx)
 
+    // Flag to check if supervisor can change status to Under Examination
+    const canChangeToUnderExamination =
+      t.status === "Active" && window.currentUserId == t.supervisor_id;
+
     content.innerHTML = `
       <div>
         <h3 class="text-xl font-semibold mb-2">${t.topic_title}</h3>
@@ -791,6 +795,20 @@ async function showThesisDetailsModal(thesisId) {
         `
             : ""
         }
+
+        ${
+          canChangeToUnderExamination
+            ? `
+          <div class="mt-6 pt-4 border-t">
+            <h4 class="text-lg font-medium mb-2">Supervisor Actions</h4>
+            <button id="changeToUnderExaminationBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200">
+              Change Status to Under Examination
+            </button>
+            <p class="mt-2 text-sm text-gray-600">This will move the thesis to the examination phase.</p>
+          </div>
+        `
+            : ""
+        }
       </div>
     `;
 
@@ -825,8 +843,50 @@ async function showThesisDetailsModal(thesisId) {
         showCancelActiveThesisModal(thesisId, t.topic_title);
       });
     }
+
+    // Add event listener for change to Under Examination button if present
+    const changeBtn = document.getElementById("changeToUnderExaminationBtn");
+    if (changeBtn) {
+      changeBtn.addEventListener("click", function () {
+        if (
+          confirm(
+            "Are you sure you want to change the status to 'Under Examination'? This action cannot be undone.",
+          )
+        ) {
+          changeThesisStatusToUnderExamination(thesisId);
+        }
+      });
+    }
   } catch (err) {
     content.innerHTML = `<div class="text-red-500 text-center">Server error loading thesis details.</div>`;
+  }
+}
+
+// AJAX function to change thesis status to Under Examination
+async function changeThesisStatusToUnderExamination(thesisId) {
+  const content = document.getElementById("thesis-details-content");
+  try {
+    const res = await fetch(
+      `/instructor/api/instructor/theses/${thesisId}/change-status-under-examination`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    const data = await res.json();
+    if (data.success) {
+      alert("Thesis status changed to 'Under Examination'.");
+      // Optionally reload the modal or the list
+      showThesisDetailsModal(thesisId);
+      // Or reload the theses list
+      if (typeof loadInstructorTheses === "function") {
+        loadInstructorTheses();
+      }
+    } else {
+      alert(data.message || "Failed to change status.");
+    }
+  } catch (err) {
+    alert("Server error. Please try again.");
   }
 }
 

@@ -343,6 +343,25 @@ class InstructorService {
       return { success: false, message: "Internal server error" };
     }
   }
+
+  async changeStatusToUnderExamination(instructorId, thesisId) {
+    // Only supervisor can do this, and only if thesis is Active
+    const thesis = await require("./thesisService").getThesisById(thesisId);
+    if (!thesis) {
+      return { success: false, message: "Thesis not found" };
+    }
+    if (thesis.supervisor_id != instructorId) {
+      return { success: false, message: "You are not the supervisor" };
+    }
+    if (thesis.status !== "Active") {
+      return { success: false, message: "Thesis is not Active" };
+    }
+    // Change status
+    return require("./thesisService").changeStatusToUnderExamination(
+      thesisId,
+      instructorId,
+    );
+  }
 }
 
 module.exports = new InstructorService();
