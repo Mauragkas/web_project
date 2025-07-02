@@ -1,5 +1,7 @@
 const express = require("express");
 const path = require("path");
+const multer = require("multer");
+const upload = multer({ storage: multer.memoryStorage() });
 const { authMiddleware } = require("../middleware/authMiddleware");
 const secretariatController = require("../controllers/secretariatController");
 
@@ -22,6 +24,14 @@ router.get(
   "/api/secretariat/thesis/:thesisId/details",
   authMiddleware("secretariat"),
   secretariatController.getThesisDetails,
+);
+
+// Data Import API
+router.post(
+  "/api/secretariat/data-import",
+  authMiddleware("secretariat"),
+  upload.single("dataFile"),
+  secretariatController.importUserData,
 );
 
 module.exports = router;

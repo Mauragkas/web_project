@@ -27,6 +27,37 @@ class SecretariatController {
       res.status(500).json({ success: false, message: "Server error" });
     }
   }
+
+  async importUserData(req, res) {
+    try {
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, message: "No file uploaded." });
+      }
+      // Pass buffer to service
+      const result = await secretariatService.processUserDataImport(
+        req.file.buffer,
+      );
+      if (result.success) {
+        return res.json({
+          success: true,
+          importedCount: result.importedCount,
+          message: result.message || "Import successful.",
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: result.message || "Import failed.",
+        });
+      }
+    } catch (error) {
+      console.error("Import user data error:", error);
+      return res
+        .status(500)
+        .json({ success: false, message: "Server error during import." });
+    }
+  }
 }
 
 module.exports = new SecretariatController();
