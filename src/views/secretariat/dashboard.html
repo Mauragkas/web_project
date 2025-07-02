@@ -7,7 +7,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Secretariat Dashboard</title>
         <link rel="stylesheet" href="/css/style.css" />
-        <script type="module" src="/js/main.js"></script>
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
             // Check session validity immediately and when tab becomes visible
@@ -21,6 +20,82 @@
                         checkSessionValidity();
                     }
                 });
+            });
+
+            // --- Secretariat: Load Active and Under Examination Theses ---
+            async function loadSecretariatTheses() {
+                const listDiv = document.getElementById(
+                    "secretariat-theses-list",
+                );
+                if (!listDiv) return;
+                listDiv.innerHTML = `<div class="text-gray-500 text-center">Loading theses...</div>`;
+
+                try {
+                    const res = await fetch(
+                        "/secretariat/api/secretariat/theses/active-under-exam",
+                    );
+                    const data = await res.json();
+                    if (!data.success) {
+                        listDiv.innerHTML = `<div class="text-red-500 text-center">Failed to load theses.</div>`;
+                        return;
+                    }
+                    if (!data.theses.length) {
+                        listDiv.innerHTML = `<div class="text-gray-500 text-center">No active or under examination theses found.</div>`;
+                        return;
+                    }
+                    listDiv.innerHTML = data.theses
+                        .map(
+                            (t) => `
+      <div class="bg-white bg-opacity-60 p-3 rounded-md mb-2 flex flex-col md:flex-row justify-between items-start md:items-center border-l-4 ${
+          t.status === "Active"
+              ? "border-indigo-500"
+              : t.status === "Under Examination"
+                ? "border-yellow-500"
+                : "border-gray-300"
+      }">
+        <div>
+          <p class="font-semibold">${t.topic_title}</p>
+          <p class="text-sm text-gray-500">Student: ${t.student_name} (${t.student_email || "-"})</p>
+          <p class="text-sm text-gray-500">Supervisor: ${t.supervisor_name} (${t.supervisor_email || "-"})</p>
+          <p class="text-sm text-gray-500">Status: ${t.status}</p>
+          <p class="text-xs text-gray-400">Assigned: ${t.assigned_date ? new Date(t.assigned_date).toLocaleDateString() : "-"}</p>
+          <p class="text-xs text-gray-400">Committee: ${t.committee_members || "-"}</p>
+        </div>
+        <!-- Optionally, add a "View Details" button here -->
+      </div>
+    `,
+                        )
+                        .join("");
+                } catch (err) {
+                    listDiv.innerHTML = `<div class="text-red-500 text-center">Server error loading theses.</div>`;
+                }
+            }
+
+            // Call this when "View Theses" is selected
+            document.addEventListener("DOMContentLoaded", function () {
+                // If on secretariat dashboard, load theses on page load or when "View Theses" is selected
+                if (window.location.pathname === "/secretariat/dashboard") {
+                    loadSecretariatTheses();
+
+                    // Optionally, reload when the sidebar "View Theses" is clicked
+                    document.querySelectorAll("aside a").forEach((link) => {
+                        if (link.innerText.trim() === "View Theses") {
+                            link.addEventListener("click", function (e) {
+                                e.preventDefault();
+                                // Hide other sections, show the view-theses-section, then load
+                                document
+                                    .querySelectorAll("main section")
+                                    .forEach((section) =>
+                                        section.classList.add("hidden"),
+                                    );
+                                document
+                                    .getElementById("view-theses-section")
+                                    .classList.remove("hidden");
+                                loadSecretariatTheses();
+                            });
+                        }
+                    });
+                }
             });
         </script>
     </head>
@@ -73,23 +148,10 @@
                         <h3 class="text-xl font-medium mb-2">
                             Active and Under Examination Theses
                         </h3>
-                        <div
-                            class="bg-white bg-opacity-60 p-3 rounded-md mb-2 flex justify-between items-center"
-                        >
-                            <div>
-                                <p class="font-semibold">
-                                    Thesis Title Example
-                                </p>
-                                <p class="text-sm text-gray-500">
-                                    Student Name - Status: Active
-                                </p>
-                            </div>
-                            <div>
-                                <button
-                                    class="text-sm text-indigo-600 hover:underline mr-2"
-                                >
-                                    View Details
-                                </button>
+                        <div id="secretariat-theses-list" class="mt-4">
+                            <!-- Theses will be loaded here -->
+                            <div class="text-gray-500 text-center">
+                                Loading theses...
                             </div>
                         </div>
                     </div>

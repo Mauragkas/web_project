@@ -684,6 +684,32 @@ class ThesisService {
       [nemertisLink, thesisId, studentId],
     );
   }
+
+  async getThesesByStatuses(statuses) {
+    const placeholders = statuses.map(() => "?").join(",");
+    const query = `
+        SELECT
+          t.*,
+          s.full_name as student_name,
+          s.email as student_email,
+          i.full_name as supervisor_name,
+          i.email as supervisor_email,
+          tt.title as topic_title,
+          tt.description as topic_description,
+          tt.document_path as topic_document_path,
+          GROUP_CONCAT(cm2.full_name, ', ') as committee_members
+        FROM theses t
+        JOIN users s ON t.student_id = s.id
+        JOIN users i ON t.supervisor_id = i.id
+        JOIN thesis_topics tt ON t.topic_id = tt.id
+        LEFT JOIN committee_members cm ON cm.thesis_id = t.id
+        LEFT JOIN users cm2 ON cm2.id = cm.instructor_id
+        WHERE t.status IN (${placeholders})
+        GROUP BY t.id
+        ORDER BY t.assigned_date DESC
+      `;
+    return executeQuery(query, statuses);
+  }
 }
 
 module.exports = new ThesisService();
