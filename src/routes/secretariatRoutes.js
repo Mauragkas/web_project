@@ -17,4 +17,11 @@ router.get(
   secretariatController.getActiveAndUnderExaminationTheses,
 );
 
+// API endpoint for thesis details
+router.get(
+  "/api/secretariat/thesis/:thesisId/details",
+  authMiddleware("secretariat"),
+  secretariatController.getThesisDetails,
+);
+
 module.exports = router;

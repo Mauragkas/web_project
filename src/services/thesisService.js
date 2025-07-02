@@ -710,6 +710,59 @@ class ThesisService {
       `;
     return executeQuery(query, statuses);
   }
+
+  // Returns all thesis details for secretariat view, including committee and elapsed time.
+  async getFullThesisDetails(thesisId) {
+    // Get thesis, topic, student, supervisor
+    const thesis = await getOne(
+      `
+        SELECT
+          t.*,
+          tt.title as topic_title,
+          tt.description as topic_description,
+          tt.document_path as topic_document_path,
+          s.full_name as student_name,
+          s.email as student_email,
+          i.full_name as supervisor_name,
+          i.email as supervisor_email
+        FROM theses t
+        JOIN thesis_topics tt ON t.topic_id = tt.id
+        JOIN users s ON t.student_id = s.id
+        JOIN users i ON t.supervisor_id = i.id
+        WHERE t.id = ?
+        `,
+      [thesisId],
+    );
+    if (!thesis) return null;
+
+    // Get committee members
+    const committee = await executeQuery(
+      `
+        SELECT u.full_name, u.email, cm.status
+        FROM committee_members cm
+        JOIN users u ON cm.instructor_id = u.id
+        WHERE cm.thesis_id = ?
+        `,
+      [thesisId],
+    );
+
+    // Calculate elapsed time since assignment
+    let elapsedDays = null,
+      elapsedYears = null;
+    if (thesis.assigned_date) {
+      const assigned = new Date(thesis.assigned_date);
+      const now = new Date();
+      elapsedDays = Math.floor((now - assigned) / (1000 * 60 * 60 * 24));
+      elapsedYears = (elapsedDays / 365).toFixed(1);
+    }
+
+    return {
+      ...thesis,
+      committee,
+      elapsedDays,
+      elapsedYears,
+    };
+  }
 }
 
 module.exports = new ThesisService();
