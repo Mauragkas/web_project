@@ -189,6 +189,41 @@ function initializeDashboard() {
 }
 
 /**
+ * Show the correct status-actions in Manage Thesis Work section based on thesis status
+ */
+async function showManageThesisActions() {
+  // Hide all status-actions
+  document
+    .querySelectorAll(".status-actions")
+    .forEach((div) => div.classList.add("hidden"));
+
+  // Fetch thesis info
+  try {
+    const res = await fetch("/student/api/student/dashboard");
+    const data = await res.json();
+    if (!data.success || !data.thesis) return;
+
+    const status = data.thesis.status;
+    if (status === "Under Assignment") {
+      const ua = document.getElementById("under-assignment-actions");
+      if (ua) ua.classList.remove("hidden");
+    } else if (status === "Under Examination") {
+      const ue = document.getElementById("under-examination-actions");
+      if (ue) ue.classList.remove("hidden");
+      // Pre-fill thesisId for upload form if present
+      const thesisIdInput = document.getElementById("thesisIdForUpload");
+      if (thesisIdInput) thesisIdInput.value = data.thesis.thesis_id;
+    } else if (status === "Completed") {
+      const ca = document.getElementById("completed-actions");
+      if (ca) ca.classList.remove("hidden");
+    }
+    // ... handle other statuses as needed
+  } catch (err) {
+    // Optionally handle error
+  }
+}
+
+/**
  * Handle sidebar navigation for dashboards
  * @param {HTMLElement} link - The clicked navigation link
  */
@@ -243,13 +278,8 @@ function handleDashboardNavigation(link) {
 
     // Student-specific actions
     if (dashboardType === "student" && navText === "Manage Thesis Work") {
-      // For demonstration, showing under-assignment-actions
-      const underAssignmentActions = document.getElementById(
-        "under-assignment-actions",
-      );
-      if (underAssignmentActions) {
-        underAssignmentActions.classList.remove("hidden");
-      }
+      // Hide all status-actions and show the correct one based on thesis status
+      showManageThesisActions();
     }
 
     // Secretariat-specific actions
@@ -414,6 +444,51 @@ function generateJsonFeed() {
   // This function is now handled inline in DOMContentLoaded for announcements page
   console.log("Generate JSON Feed clicked");
 }
+
+document
+  .getElementById("uploadMaterialsForm")
+  ?.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const form = e.target;
+    const messageDiv = document.getElementById("uploadMaterialsMessage");
+    messageDiv.classList.add("hidden");
+    messageDiv.textContent = "";
+
+    const thesisId =
+      window.studentThesisId ||
+      document.getElementById("thesisIdForUpload").value;
+    if (!thesisId) {
+      messageDiv.textContent = "No thesis found.";
+      messageDiv.classList.remove("hidden", "text-green-600");
+      messageDiv.classList.add("text-red-600");
+      return;
+    }
+
+    const formData = new FormData(form);
+    formData.set("thesisId", thesisId);
+
+    try {
+      const res = await fetch("/student/api/student/thesis/materials", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        messageDiv.textContent = "Materials uploaded successfully!";
+        messageDiv.classList.remove("hidden", "text-red-600");
+        messageDiv.classList.add("text-green-600");
+        form.reset();
+      } else {
+        messageDiv.textContent = data.message || "Failed to upload materials.";
+        messageDiv.classList.remove("hidden", "text-green-600");
+        messageDiv.classList.add("text-red-600");
+      }
+    } catch (err) {
+      messageDiv.textContent = "Server error. Please try again.";
+      messageDiv.classList.remove("hidden", "text-green-600");
+      messageDiv.classList.add("text-red-600");
+    }
+  });
 
 // --- Student Edit Profile Form Submission ---
 document

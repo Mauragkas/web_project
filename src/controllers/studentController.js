@@ -133,6 +133,63 @@ class StudentController {
       return res.status(500).json({ success: false, message: "Server error." });
     }
   }
+  async uploadMaterials(req, res) {
+    try {
+      const studentId = req.session.userId;
+      const { thesisId, externalLinks } = req.body;
+      const draftFile = req.file;
+
+      // Validate input
+      if (!thesisId) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Thesis ID is required" });
+      }
+
+      // Check thesis belongs to student and is Under Examination
+      const thesis = await require("../services/thesisService").getThesisById(
+        thesisId,
+      );
+      if (!thesis || thesis.student_id != studentId) {
+        return res
+          .status(403)
+          .json({ success: false, message: "Access denied" });
+      }
+      if (thesis.status !== "Under Examination") {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Thesis must be Under Examination",
+          });
+      }
+
+      // Call service to handle upload
+      const result =
+        await require("../services/studentService").handleMaterialUpload(
+          thesisId,
+          draftFile,
+          externalLinks,
+        );
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: "Materials uploaded successfully",
+        });
+      } else {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: result.message || "Failed to upload materials",
+          });
+      }
+    } catch (error) {
+      console.error("Upload materials error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
 }
 
 module.exports = new StudentController();

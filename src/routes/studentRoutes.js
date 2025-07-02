@@ -1,9 +1,29 @@
 const express = require("express");
+const multer = require("multer");
 const path = require("path");
 const { authMiddleware } = require("../middleware/authMiddleware");
 const studentController = require("../controllers/studentController");
 
 const router = express.Router();
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "../../public/uploads/thesis_drafts"));
+  },
+  filename: function (req, file, cb) {
+    // Use thesisId + timestamp for uniqueness
+    const ext = path.extname(file.originalname);
+    cb(null, `thesis_${req.body.thesisId || "unknown"}_${Date.now()}${ext}`);
+  },
+});
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    // Accept only PDFs
+    if (file.mimetype === "application/pdf") cb(null, true);
+    else cb(new Error("Only PDF files are allowed!"));
+  },
+});
 
 router.get("/dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "../views/student/dashboard.html"));
@@ -34,6 +54,14 @@ router.post(
   "/api/student/profile",
   authMiddleware("student"),
   studentController.updateProfile,
+);
+
+// API: Upload thesis draft and supporting material
+router.post(
+  "/api/student/thesis/materials",
+  authMiddleware("student"),
+  upload.single("draftFile"),
+  studentController.uploadMaterials,
 );
 
 module.exports = router;

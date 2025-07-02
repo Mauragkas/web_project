@@ -167,12 +167,7 @@ CREATE TABLE thesis_topics (
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (instructor_id) REFERENCES users(id)
         );
-INSERT INTO thesis_topics VALUES(6,8,'REEEEEEEEEEE','REEEEEEEEEEE',NULL,'Under Assignment','2025-06-26 11:16:51');
-INSERT INTO thesis_topics VALUES(7,8,'asdfasdf','asdfasdfasdf','/uploads/topics/1751021968159-document.pdf','Under Assignment','2025-06-26 17:34:28');
-INSERT INTO thesis_topics VALUES(8,8,'Machine Learning for Healthcare','Applying machine learning techniques to healthcare data for improved diagnostics',NULL,'Available','2025-06-27 13:00:51');
-INSERT INTO thesis_topics VALUES(9,8,'Machine Learning for Healthcare Analytics','Using AI techniques to analyze healthcare data and improve patient outcomes.',NULL,'Under Assignment','2025-06-27 14:10:51');
-INSERT INTO thesis_topics VALUES(10,8,'Test Active Thesis','A test thesis for note functionality.',NULL,'Under Assignment','2025-06-27 14:12:58');
-INSERT INTO thesis_topics VALUES(11,8,'Test Thesis for Cancellation','A thesis to test supervisor cancellation after 2 years.',NULL,'Active','2021-06-15');
+INSERT INTO thesis_topics VALUES(12,8,'asdfasdfzxcvdfg','adfhjmfdghjnfghn','/uploads/topics/1751472038315-document.pdf','Under Assignment','2025-07-02 16:00:38');
 CREATE TABLE theses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             topic_id INTEGER NOT NULL,
@@ -183,20 +178,22 @@ CREATE TABLE theses (
             completion_date TIMESTAMP,
             grade TEXT,
             ap_number TEXT,
-            library_link TEXT, presentation_date DATE, presentation_time TIME, presentation_location TEXT, cancellation_reason TEXT, ga_number TEXT, ga_year TEXT, cancellation_date TIMESTAMP,
+            library_link TEXT, presentation_date DATE, presentation_time TIME, presentation_location TEXT, cancellation_reason TEXT, ga_number TEXT, ga_year TEXT, cancellation_date TIMESTAMP, draft_path TEXT, external_links TEXT,
             FOREIGN KEY (topic_id) REFERENCES thesis_topics(id),
             FOREIGN KEY (student_id) REFERENCES users(id),
             FOREIGN KEY (supervisor_id) REFERENCES users(id)
         );
-INSERT INTO theses VALUES(1,6,7,8,'Cancelled','2025-06-26 11:47:14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(2,6,7,8,'Cancelled','2025-06-26 11:52:14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(3,6,7,8,'Under Examination','2025-06-26 11:57:37',NULL,NULL,NULL,NULL,'2025-06-28','14:04','raaaaaaaa',NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(4,7,7,8,'Cancelled','2025-06-27 10:16:23',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(5,8,7,8,'Under Examination','2025-05-28',NULL,NULL,NULL,NULL,'2025-07-07','15:00','Conference Room B, Computer Science Department',NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(6,9,7,8,'Active','2025-05-28 14:10:57',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(7,10,7,8,'Active','2025-06-17 14:12:58',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(8,9,7,8,'Cancelled','2021-06-20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'asdffasdf','20012312313','2025','2025-06-27 14:53:20');
-INSERT INTO theses VALUES(9,7,7,8,'Under Assignment','2025-07-02 15:36:01',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO theses VALUES(1,6,7,8,'Cancelled','2025-06-26 11:47:14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO theses VALUES(2,6,7,8,'Cancelled','2025-06-26 11:52:14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO theses VALUES(3,6,7,8,'Under Examination','2025-06-26 11:57:37',NULL,NULL,NULL,NULL,'2025-06-28','14:04','raaaaaaaa',NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO theses VALUES(4,7,7,8,'Cancelled','2025-06-27 10:16:23',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO theses VALUES(5,8,7,8,'Under Examination','2025-05-28',NULL,NULL,NULL,NULL,'2025-07-07','15:00','Conference Room B, Computer Science Department',NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO theses VALUES(6,9,7,8,'Active','2025-05-28 14:10:57',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO theses VALUES(7,10,7,8,'Active','2025-06-17 14:12:58',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO theses VALUES(8,9,7,8,'Cancelled','2021-06-20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'asdffasdf','20012312313','2025','2025-06-27 14:53:20',NULL,NULL);
+INSERT INTO theses VALUES(9,7,7,8,'Under Assignment','2025-07-02 15:36:01',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO theses VALUES(10,12,7,8,'Under Assignment','2025-07-02 16:01:19',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO theses VALUES(11,8,7,8,'Under Examination','2025-05-28',NULL,NULL,NULL,NULL,'2025-07-07','15:00','Conference Room B, Computer Science Department',NULL,NULL,NULL,NULL,NULL,NULL);
 CREATE TABLE committee_members (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             thesis_id INTEGER NOT NULL,
@@ -236,8 +233,8 @@ CREATE TABLE thesis_status_history (
 );
 INSERT INTO thesis_status_history VALUES(1,8,'Active','Cancelled','Instructor (8)','2025-06-27 14:53:20');
 INSERT INTO sqlite_sequence VALUES('users',154);
-INSERT INTO sqlite_sequence VALUES('thesis_topics',11);
-INSERT INTO sqlite_sequence VALUES('theses',9);
+INSERT INTO sqlite_sequence VALUES('thesis_topics',12);
+INSERT INTO sqlite_sequence VALUES('theses',11);
 INSERT INTO sqlite_sequence VALUES('committee_members',7);
 INSERT INTO sqlite_sequence VALUES('thesis_notes',3);
 INSERT INTO sqlite_sequence VALUES('thesis_status_history',1);

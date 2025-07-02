@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS theses (
     ga_number TEXT,
     ga_year TEXT,
     cancellation_date TIMESTAMP,
+    draft_path TEXT,
+    external_links TEXT,
     FOREIGN KEY (topic_id) REFERENCES thesis_topics(id),
     FOREIGN KEY (student_id) REFERENCES users(id),
     FOREIGN KEY (supervisor_id) REFERENCES users(id)

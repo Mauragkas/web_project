@@ -102,6 +102,39 @@ class StudentService {
     await thesisService.createCommitteeInvitations(thesisId, instructorIds);
     return { success: true };
   }
+  async handleMaterialUpload(thesisId, draftFile, externalLinks) {
+    try {
+      let draftPath = null;
+      if (draftFile) {
+        // Save relative path for serving
+        draftPath = "/uploads/thesis_drafts/" + draftFile.filename;
+      }
+
+      // Store externalLinks as string (could be JSON or newline-separated)
+      let linksToStore = externalLinks;
+      if (Array.isArray(externalLinks)) {
+        linksToStore = externalLinks.join("\n");
+      }
+
+      // Update thesis record
+      const result = await executeRun(
+        `UPDATE theses SET draft_path = ?, external_links = ? WHERE id = ?`,
+        [draftPath, linksToStore, thesisId],
+      );
+
+      if (result.changes > 0) {
+        return { success: true };
+      } else {
+        return {
+          success: false,
+          message: "No changes made or thesis not found",
+        };
+      }
+    } catch (error) {
+      console.error("handleMaterialUpload error:", error);
+      return { success: false, message: "Internal server error" };
+    }
+  }
 }
 
 module.exports = new StudentService();
