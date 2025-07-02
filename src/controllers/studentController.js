@@ -303,6 +303,32 @@ class StudentController {
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }
+
+  async getExaminationReport(req, res) {
+    try {
+      const studentId = req.session.userId;
+      const thesisId = req.params.thesisId;
+
+      // Generate the HTML report
+      const html = await studentService.generateExaminationReport(
+        studentId,
+        thesisId,
+      );
+
+      if (!html) {
+        return res
+          .status(404)
+          .send("Examination report not found or not available.");
+      }
+
+      // Serve as HTML
+      res.setHeader("Content-Type", "text/html");
+      return res.send(html);
+    } catch (error) {
+      console.error("Error generating examination report:", error);
+      return res.status(500).send("Failed to generate examination report.");
+    }
+  }
 }
 
 module.exports = new StudentController();

@@ -495,6 +495,7 @@
                                     Post-Examination
                                 </h4>
                                 <button
+                                    id="view-exam-report-btn"
                                     class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 mr-2"
                                 >
                                     View Examination Report
@@ -539,6 +540,7 @@
                                     View Thesis Information
                                 </button>
                                 <button
+                                    id="view-exam-report-btn-completed"
                                     class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
                                 >
                                     View Examination Report
@@ -715,6 +717,44 @@
                 }
             }
             document.addEventListener("DOMContentLoaded", loadStudentProfile);
+
+            // View Examination Report Button Handler (Under Examination)
+            document
+                .getElementById("view-exam-report-btn")
+                ?.addEventListener("click", function () {
+                    // Get thesisId (from global or hidden input)
+                    const thesisId =
+                        window.studentThesisId ||
+                        document.getElementById("thesisIdForUpload")?.value;
+                    if (!thesisId) {
+                        alert("No thesis found.");
+                        return;
+                    }
+                    // Open in new tab
+                    window.open(
+                        `/student/api/student/thesis/${thesisId}/report`,
+                        "_blank",
+                    );
+                });
+
+            // View Examination Report Button Handler (Completed Thesis)
+            document
+                .getElementById("view-exam-report-btn-completed")
+                ?.addEventListener("click", function () {
+                    // Get thesisId (from global or hidden input)
+                    const thesisId =
+                        window.studentThesisId ||
+                        document.getElementById("thesisIdForUpload")?.value;
+                    if (!thesisId) {
+                        alert("No thesis found.");
+                        return;
+                    }
+                    // Open in new tab
+                    window.open(
+                        `/student/api/student/thesis/${thesisId}/report`,
+                        "_blank",
+                    );
+                });
         </script>
     </body>
 </html>

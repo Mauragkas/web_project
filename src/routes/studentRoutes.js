@@ -78,4 +78,11 @@ router.post(
   studentController.submitPresentationDetails,
 );
 
+// API: Get examination report (HTML)
+router.get(
+  "/api/student/thesis/:thesisId/report",
+  authMiddleware("student"),
+  studentController.getExaminationReport,
+);
+
 module.exports = router;

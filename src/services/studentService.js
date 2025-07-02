@@ -246,6 +246,161 @@ class StudentService {
       return { success: false, message: "Internal server error" };
     }
   }
+
+  async generateExaminationReport(studentId, thesisId) {
+    const thesis = await getOne(
+      `SELECT t.*,
+                tt.title as topic_title, tt.description as topic_description, tt.document_path as topic_document_path,
+                s.full_name as supervisor_name, s.email as supervisor_email,
+                u.full_name as student_name, u.email as student_email
+         FROM theses t
+         JOIN thesis_topics tt ON t.topic_id = tt.id
+         JOIN users s ON t.supervisor_id = s.id
+         JOIN users u ON t.student_id = u.id
+         WHERE t.id = ? AND t.student_id = ? AND t.status IN ('Under Examination', 'Graded', 'Completed')`,
+      [thesisId, studentId],
+    );
+    if (!thesis) return null;
+
+    const grades = await executeQuery(
+      `SELECT g.*,
+                u.full_name as instructor_name,
+                CASE WHEN t.supervisor_id = g.instructor_id THEN 'Supervisor' ELSE 'Committee Member' END as instructor_role
+         FROM grades g
+         JOIN users u ON g.instructor_id = u.id
+         JOIN theses t ON g.thesis_id = t.id
+         WHERE g.thesis_id = ?
+         ORDER BY instructor_role DESC, g.created_at ASC`,
+      [thesisId],
+    );
+
+    if (!grades || grades.length === 0) return null;
+
+    const avgGrade =
+      grades.reduce((sum, g) => sum + (g.grade_value || 0), 0) / grades.length;
+
+    const html = `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Examination Report - ${thesis.topic_title}</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+      body { background: #f9fafb; color: #222; font-family: Inter, sans-serif; }
+      .report-container { max-width: 700px; margin: 2rem auto; background: #fff; border-radius: 1rem; box-shadow: 0 2px 8px #0001; padding: 2rem; }
+      .report-title { font-size: 2rem; font-weight: bold; color: #4f46e5; margin-bottom: 1rem; }
+      .section-title { font-size: 1.2rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.5rem; color: #4338ca; }
+      .grades-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+      .grades-table th, .grades-table td { border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; }
+      .grades-table th { background: #f3f4f6; }
+      .criteria-json { font-size: 0.95em; color: #374151; background: #f9fafb; border-radius: 0.25rem; padding: 0.25rem 0.5rem; }
+      .avg-grade { font-size: 1.5rem; color: #10b981; font-weight: bold; }
+      .comments { color: #374151; font-style: italic; }
+    </style>
+  </head>
+  <body>
+    <div class="report-container">
+      <div class="report-title">Examination Report</div>
+      <div>
+        <span class="section-title">Thesis Title:</span>
+        <div>${thesis.topic_title}</div>
+      </div>
+      <div>
+        <span class="section-title">Student:</span>
+        <div>${thesis.student_name} (${thesis.student_email || "-"})</div>
+      </div>
+      <div>
+        <span class="section-title">Supervisor:</span>
+        <div>${thesis.supervisor_name} (${thesis.supervisor_email || "-"})</div>
+      </div>
+      <div>
+        <span class="section-title">Status:</span>
+        <div>${thesis.status}</div>
+      </div>
+      <div>
+        <span class="section-title">Presentation Date/Time:</span>
+        <div>
+          ${thesis.presentation_date ? new Date(thesis.presentation_date).toLocaleDateString() : "-"}
+          ${thesis.presentation_time ? "at " + thesis.presentation_time : ""}
+        </div>
+      </div>
+      <div>
+        <span class="section-title">Committee Members:</span>
+        <div>${thesis.committee_members || "-"}</div>
+      </div>
+      <div>
+        <span class="section-title">Grades:</span>
+        <table class="grades-table">
+          <thead>
+            <tr>
+              <th>Instructor</th>
+              <th>Role</th>
+              <th>Grade</th>
+              <th>Criteria</th>
+              <th>Comments</th>
+              <th>Submitted At</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${grades
+              .map(
+                (g) => `
+              <tr>
+                <td>${g.instructor_name}</td>
+                <td>${g.instructor_role}</td>
+                <td style="font-weight:bold; color:#4f46e5;">${g.grade_value}/10</td>
+                <td>
+                  ${
+                    g.criteria_json
+                      ? `<span class="criteria-json">${formatCriteria(g.criteria_json)}</span>`
+                      : "-"
+                  }
+                </td>
+                <td class="comments">${g.comments ? escapeHtml(g.comments) : "-"}</td>
+                <td>${g.created_at ? new Date(g.created_at).toLocaleString() : "-"}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+        <div class="mt-4">
+          <span class="section-title">Average Grade:</span>
+          <span class="avg-grade">${avgGrade.toFixed(2)} / 10</span>
+        </div>
+      </div>
+      <div style="margin-top:2rem;">
+        <a href="#" onclick="window.close();return false;" style="color:#4f46e5;text-decoration:underline;">Close Report</a>
+      </div>
+    </div>
+  </body>
+  </html>
+  `;
+
+    return html;
+
+    // Helper to pretty-print criteria JSON
+    function formatCriteria(json) {
+      try {
+        const obj = JSON.parse(json);
+        return Object.entries(obj)
+          .map(([k, v]) => `<b>${escapeHtml(k)}:</b> ${escapeHtml(v)}`)
+          .join("<br>");
+      } catch {
+        return escapeHtml(json);
+      }
+    }
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+  }
 }
 
 module.exports = new StudentService();
