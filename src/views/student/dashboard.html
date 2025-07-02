@@ -504,20 +504,27 @@
                                     <label
                                         for="library-link"
                                         class="block text-gray-700 font-semibold mb-2"
-                                        >Link to Library Repository
-                                        (Nemertis)</label
                                     >
+                                        Link to Library Repository (Nemertis)
+                                    </label>
                                     <input
                                         type="url"
                                         id="library-link"
                                         name="library-link"
                                         class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"
+                                        placeholder="https://nemertis.upatras.gr/..."
+                                        required
                                     />
                                     <button
+                                        id="submit-library-link-btn"
                                         class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
                                     >
                                         Submit Library Link
                                     </button>
+                                    <div
+                                        id="library-link-message"
+                                        class="mt-2 text-sm font-medium hidden"
+                                    ></div>
                                 </div>
                             </div>
                         </div>
@@ -755,6 +762,94 @@
                         "_blank",
                     );
                 });
+
+            // --- Library Link Submission Handler ---
+            document
+                .getElementById("submit-library-link-btn")
+                ?.addEventListener("click", async function (e) {
+                    e.preventDefault();
+                    const input = document.getElementById("library-link");
+                    const messageDiv = document.getElementById(
+                        "library-link-message",
+                    );
+                    messageDiv.classList.add("hidden");
+                    messageDiv.textContent = "";
+
+                    const nemertisLink = input.value.trim();
+                    const thesisId =
+                        window.studentThesisId ||
+                        document.getElementById("thesisIdForUpload")?.value;
+
+                    if (!nemertisLink || !/^https?:\/\/.+/.test(nemertisLink)) {
+                        messageDiv.textContent =
+                            "Please enter a valid Nemertis link (starting with http/https).";
+                        messageDiv.classList.remove("hidden", "text-green-600");
+                        messageDiv.classList.add("text-red-600");
+                        return;
+                    }
+                    if (!thesisId) {
+                        messageDiv.textContent = "No thesis found.";
+                        messageDiv.classList.remove("hidden", "text-green-600");
+                        messageDiv.classList.add("text-red-600");
+                        return;
+                    }
+
+                    try {
+                        const res = await fetch(
+                            `/student/api/student/thesis/${thesisId}/repository-link`,
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ nemertisLink }),
+                            },
+                        );
+                        const data = await res.json();
+                        if (data.success) {
+                            messageDiv.textContent =
+                                "Repository link recorded successfully!";
+                            messageDiv.classList.remove(
+                                "hidden",
+                                "text-red-600",
+                            );
+                            messageDiv.classList.add("text-green-600");
+                        } else {
+                            messageDiv.textContent =
+                                data.message || "Failed to record link.";
+                            messageDiv.classList.remove(
+                                "hidden",
+                                "text-green-600",
+                            );
+                            messageDiv.classList.add("text-red-600");
+                        }
+                    } catch (err) {
+                        messageDiv.textContent =
+                            "Server error. Please try again.";
+                        messageDiv.classList.remove("hidden", "text-green-600");
+                        messageDiv.classList.add("text-red-600");
+                    }
+                });
+
+            // Pre-fill library link input if exists after loading thesis info
+            async function loadStudentThesisInfo() {
+                try {
+                    const res = await fetch("/student/api/student/dashboard");
+                    const data = await res.json();
+                    if (data.success && data.thesis) {
+                        if (data.thesis.library_link) {
+                            const libInput =
+                                document.getElementById("library-link");
+                            if (libInput)
+                                libInput.value = data.thesis.library_link;
+                        }
+                    }
+                } catch (err) {
+                    // Optionally handle error
+                }
+            }
+            document.addEventListener(
+                "DOMContentLoaded",
+                loadStudentThesisInfo,
+            );
         </script>
     </body>
 </html>

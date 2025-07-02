@@ -677,6 +677,13 @@ class ThesisService {
       throw error;
     }
   }
+
+  async updateRepositoryLink(thesisId, nemertisLink, studentId) {
+    return executeRun(
+      "UPDATE theses SET library_link = ? WHERE id = ? AND student_id = ?",
+      [nemertisLink, thesisId, studentId],
+    );
+  }
 }
 
 module.exports = new ThesisService();

@@ -329,6 +329,52 @@ class StudentController {
       return res.status(500).send("Failed to generate examination report.");
     }
   }
+
+  async recordRepositoryLink(req, res) {
+    try {
+      const studentId = req.session.userId;
+      const thesisId = req.params.thesisId;
+      const { nemertisLink } = req.body;
+
+      // Basic validation
+      if (
+        !nemertisLink ||
+        typeof nemertisLink !== "string" ||
+        !nemertisLink.startsWith("http")
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "A valid Nemertis link is required.",
+          });
+      }
+
+      // Call service
+      const result = await studentService.saveRepositoryLink(
+        studentId,
+        thesisId,
+        nemertisLink,
+      );
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: "Repository link recorded.",
+        });
+      } else {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: result.message || "Failed to record link.",
+          });
+      }
+    } catch (error) {
+      console.error("Error recording repository link:", error);
+      return res.status(500).json({ success: false, message: "Server error." });
+    }
+  }
 }
 
 module.exports = new StudentController();

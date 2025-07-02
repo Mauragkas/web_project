@@ -401,6 +401,48 @@ class StudentService {
         .replace(/'/g, "&#39;");
     }
   }
+
+  async saveRepositoryLink(studentId, thesisId, nemertisLink) {
+    const thesis = await getOne(
+      "SELECT id, status FROM theses WHERE id = ? AND student_id = ?",
+      [thesisId, studentId],
+    );
+    if (!thesis) {
+      return { success: false, message: "Thesis not found or access denied." };
+    }
+    if (!["Under Examination", "Graded", "Completed"].includes(thesis.status)) {
+      return {
+        success: false,
+        message:
+          "Repository link can only be recorded for theses under examination or graded.",
+      };
+    }
+
+    const grades = await executeQuery(
+      "SELECT COUNT(*) as cnt FROM grades WHERE thesis_id = ?",
+      [thesisId],
+    );
+    if (!grades[0] || grades[0].cnt === 0) {
+      return {
+        success: false,
+        message:
+          "Grades must be recorded before submitting the repository link.",
+      };
+    }
+
+    const result = await executeRun(
+      "UPDATE theses SET library_link = ? WHERE id = ? AND student_id = ?",
+      [nemertisLink, thesisId, studentId],
+    );
+    if (result.changes > 0) {
+      return { success: true };
+    } else {
+      return {
+        success: false,
+        message: "No changes made or thesis not found.",
+      };
+    }
+  }
 }
 
 module.exports = new StudentService();

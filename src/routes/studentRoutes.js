@@ -85,4 +85,11 @@ router.get(
   studentController.getExaminationReport,
 );
 
+// API: Record library repository link (Nemertis)
+router.post(
+  "/api/student/thesis/:thesisId/repository-link",
+  authMiddleware("student"),
+  studentController.recordRepositoryLink,
+);
+
 module.exports = router;
