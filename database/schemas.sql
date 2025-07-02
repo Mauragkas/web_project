@@ -1,12 +1,31 @@
 -- users table
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     role TEXT NOT NULL CHECK(role IN ('student', 'instructor', 'secretariat')),
     email TEXT UNIQUE,
     full_name TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Student fields
+    name TEXT,
+    surname TEXT,
+    student_number TEXT,
+    street TEXT,
+    address_number TEXT,
+    city TEXT,
+    postcode TEXT,
+    father_name TEXT,
+    landline_telephone TEXT,
+    mobile_telephone TEXT,
+
+    -- Instructor fields
+    topic TEXT,
+    landline TEXT,
+    mobile TEXT,
+    department TEXT,
+    university TEXT
 );
 
 -- thesis_topics table

@@ -72,6 +72,67 @@ class StudentController {
       res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  async updateProfile(req, res) {
+    try {
+      const studentId = req.session.userId;
+      const {
+        email,
+        street,
+        address_number,
+        city,
+        postcode,
+        mobile_telephone,
+        landline_telephone,
+      } = req.body;
+
+      // Basic validation
+      if (!email || !street || !address_number || !city || !postcode) {
+        return res.status(400).json({
+          success: false,
+          message: "All fields except phones are required.",
+        });
+      }
+
+      // Optionally: validate email format, phone numbers, etc.
+
+      // Update in DB
+      const { executeRun } = require("../db/database");
+      const result = await executeRun(
+        `UPDATE users SET
+          email = ?,
+          street = ?,
+          address_number = ?,
+          city = ?,
+          postcode = ?,
+          mobile_telephone = ?,
+          landline_telephone = ?
+        WHERE id = ? AND role = 'student'`,
+        [
+          email,
+          street,
+          address_number,
+          city,
+          postcode,
+          mobile_telephone,
+          landline_telephone,
+          studentId,
+        ],
+      );
+
+      if (result.changes > 0) {
+        return res.json({ success: true, message: "Profile updated." });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "No changes made or user not found.",
+        });
+      }
+    } catch (error) {
+      console.error("Update profile error:", error);
+      return res.status(500).json({ success: false, message: "Server error." });
+    }
+  }
 }
 
 module.exports = new StudentController();

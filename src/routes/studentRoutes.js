@@ -30,4 +30,10 @@ router.post(
   studentController.inviteCommitteeMembers,
 );
 
+router.post(
+  "/api/student/profile",
+  authMiddleware("student"),
+  studentController.updateProfile,
+);
+
 module.exports = router;

@@ -415,6 +415,76 @@ function generateJsonFeed() {
   console.log("Generate JSON Feed clicked");
 }
 
+// --- Student Edit Profile Form Submission ---
+document
+  .getElementById("editProfileForm")
+  ?.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const form = e.target;
+    const messageDiv = document.getElementById("profileMessage");
+    messageDiv.classList.add("hidden");
+    messageDiv.textContent = "";
+
+    const data = {
+      email: form.email.value.trim(),
+      street: form.street.value.trim(),
+      address_number: form.address_number.value.trim(),
+      city: form.city.value.trim(),
+      postcode: form.postcode.value.trim(),
+      mobile_telephone: form.mobile_telephone.value.trim(),
+      landline_telephone: form.landline_telephone.value.trim(),
+    };
+
+    // Optionally: validate fields here
+
+    try {
+      const res = await fetch("/student/api/student/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (result.success) {
+        messageDiv.textContent = "Profile updated successfully!";
+        messageDiv.classList.remove("hidden", "text-red-600");
+        messageDiv.classList.add("text-green-600");
+      } else {
+        messageDiv.textContent = result.message || "Failed to update profile.";
+        messageDiv.classList.remove("hidden", "text-green-600");
+        messageDiv.classList.add("text-red-600");
+      }
+    } catch (err) {
+      messageDiv.textContent = "Server error. Please try again.";
+      messageDiv.classList.remove("hidden", "text-green-600");
+      messageDiv.classList.add("text-red-600");
+    }
+  });
+
+// --- Pre-fill Edit Profile Form with Current Data ---
+async function loadStudentProfile() {
+  // Only run on student dashboard and if form exists
+  if (!document.getElementById("editProfileForm")) return;
+  try {
+    const res = await fetch("/student/api/student/dashboard");
+    const data = await res.json();
+    if (data.success && data.thesis) {
+      document.getElementById("street").value = data.thesis.street || "";
+      document.getElementById("address_number").value =
+        data.thesis.address_number || "";
+      document.getElementById("city").value = data.thesis.city || "";
+      document.getElementById("postcode").value = data.thesis.postcode || "";
+      document.getElementById("email").value = data.thesis.email || "";
+      document.getElementById("mobile_telephone").value =
+        data.thesis.mobile_telephone || "";
+      document.getElementById("landline_telephone").value =
+        data.thesis.landline_telephone || "";
+    }
+  } catch (err) {
+    // Optionally handle error
+  }
+}
+document.addEventListener("DOMContentLoaded", loadStudentProfile);
+
 /**
  * Load and render instructor topics in the dashboard
  */
