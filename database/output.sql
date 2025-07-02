@@ -178,22 +178,22 @@ CREATE TABLE theses (
             completion_date TIMESTAMP,
             grade TEXT,
             ap_number TEXT,
-            library_link TEXT, presentation_date DATE, presentation_time TIME, presentation_location TEXT, cancellation_reason TEXT, ga_number TEXT, ga_year TEXT, cancellation_date TIMESTAMP, draft_path TEXT, external_links TEXT,
+            library_link TEXT, presentation_date DATE, presentation_time TIME, presentation_location TEXT, cancellation_reason TEXT, ga_number TEXT, ga_year TEXT, cancellation_date TIMESTAMP, draft_path TEXT, external_links TEXT, grading_active BOOLEAN DEFAULT FALSE, presentation_location_type TEXT, connection_link TEXT,
             FOREIGN KEY (topic_id) REFERENCES thesis_topics(id),
             FOREIGN KEY (student_id) REFERENCES users(id),
             FOREIGN KEY (supervisor_id) REFERENCES users(id)
         );
-INSERT INTO theses VALUES(1,6,7,8,'Cancelled','2025-06-26 11:47:14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(2,6,7,8,'Cancelled','2025-06-26 11:52:14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(3,6,7,8,'Under Examination','2025-06-26 11:57:37',NULL,NULL,NULL,NULL,'2025-06-28','14:04','raaaaaaaa',NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(4,7,7,8,'Cancelled','2025-06-27 10:16:23',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(5,8,7,8,'Under Examination','2025-05-28',NULL,NULL,NULL,NULL,'2025-07-07','15:00','Conference Room B, Computer Science Department',NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(6,9,7,8,'Active','2025-05-28 14:10:57',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(7,10,7,8,'Active','2025-06-17 14:12:58',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(8,9,7,8,'Cancelled','2021-06-20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'asdffasdf','20012312313','2025','2025-06-27 14:53:20',NULL,NULL);
-INSERT INTO theses VALUES(9,7,7,8,'Under Assignment','2025-07-02 15:36:01',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(10,12,7,8,'Under Assignment','2025-07-02 16:01:19',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO theses VALUES(11,8,7,8,'Under Examination','2025-05-28',NULL,NULL,NULL,NULL,'2025-07-07','15:00','Conference Room B, Computer Science Department',NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO theses VALUES(1,6,7,8,'Cancelled','2025-06-26 11:47:14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
+INSERT INTO theses VALUES(2,6,7,8,'Cancelled','2025-06-26 11:52:14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
+INSERT INTO theses VALUES(3,6,7,8,'Under Examination','2025-06-26 11:57:37',NULL,NULL,NULL,NULL,'2025-06-28','14:04','raaaaaaaa',NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
+INSERT INTO theses VALUES(4,7,7,8,'Cancelled','2025-06-27 10:16:23',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
+INSERT INTO theses VALUES(5,8,7,8,'Under Examination','2025-05-28',NULL,NULL,NULL,NULL,'2025-07-07','15:00','Conference Room B, Computer Science Department',NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
+INSERT INTO theses VALUES(6,9,7,8,'Active','2025-05-28 14:10:57',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
+INSERT INTO theses VALUES(7,10,7,8,'Active','2025-06-17 14:12:58',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
+INSERT INTO theses VALUES(8,9,7,8,'Cancelled','2021-06-20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'asdffasdf','20012312313','2025','2025-06-27 14:53:20',NULL,NULL,0,NULL,NULL);
+INSERT INTO theses VALUES(9,7,7,8,'Under Assignment','2025-07-02 15:36:01',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
+INSERT INTO theses VALUES(10,12,7,8,'Under Examination','2025-07-02 16:01:19',NULL,NULL,NULL,NULL,'2025-07-02','12:31','',NULL,NULL,NULL,NULL,'/uploads/thesis_drafts/thesis_unknown_1751478835542.pdf','',0,'online','https://asdfasdf.com');
+INSERT INTO theses VALUES(11,8,7,8,'Under Examination','2025-05-28',NULL,NULL,NULL,NULL,'2025-07-07','15:00','Conference Room B, Computer Science Department',NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
 CREATE TABLE committee_members (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             thesis_id INTEGER NOT NULL,
@@ -210,6 +210,8 @@ INSERT INTO committee_members VALUES(4,6,8,'Accepted','2025-06-07 14:11:03','202
 INSERT INTO committee_members VALUES(5,6,9,'Accepted','2025-06-07 14:11:03','2025-06-12 14:11:03');
 INSERT INTO committee_members VALUES(6,7,8,'Accepted','2025-06-18 14:12:58','2025-06-19 14:12:58');
 INSERT INTO committee_members VALUES(7,7,9,'Accepted','2025-06-18 14:12:58','2025-06-19 14:12:58');
+INSERT INTO committee_members VALUES(8,10,105,'Accepted','2025-07-02 16:13:12','2025-07-02 16:14:12');
+INSERT INTO committee_members VALUES(9,10,106,'Accepted','2025-07-02 16:13:12','2025-07-02 16:13:48');
 CREATE TABLE thesis_notes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     thesis_id INTEGER NOT NULL,
@@ -222,6 +224,7 @@ CREATE TABLE thesis_notes (
 INSERT INTO thesis_notes VALUES(1,7,8,'asfasdfasfd','2025-06-27 14:45:17');
 INSERT INTO thesis_notes VALUES(2,7,8,'this is a note','2025-06-27 16:38:00');
 INSERT INTO thesis_notes VALUES(3,6,8,'this is a note 2','2025-06-27 16:38:20');
+INSERT INTO thesis_notes VALUES(4,10,8,'reasrsfdasdf','2025-07-02 16:15:08');
 CREATE TABLE thesis_status_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     thesis_id INTEGER NOT NULL,
@@ -232,10 +235,11 @@ CREATE TABLE thesis_status_history (
     FOREIGN KEY (thesis_id) REFERENCES theses(id)
 );
 INSERT INTO thesis_status_history VALUES(1,8,'Active','Cancelled','Instructor (8)','2025-06-27 14:53:20');
+INSERT INTO thesis_status_history VALUES(2,10,'Active','Under Examination','Instructor (8)','2025-07-02 16:15:10');
 INSERT INTO sqlite_sequence VALUES('users',154);
 INSERT INTO sqlite_sequence VALUES('thesis_topics',12);
 INSERT INTO sqlite_sequence VALUES('theses',11);
-INSERT INTO sqlite_sequence VALUES('committee_members',7);
-INSERT INTO sqlite_sequence VALUES('thesis_notes',3);
-INSERT INTO sqlite_sequence VALUES('thesis_status_history',1);
+INSERT INTO sqlite_sequence VALUES('committee_members',9);
+INSERT INTO sqlite_sequence VALUES('thesis_notes',4);
+INSERT INTO sqlite_sequence VALUES('thesis_status_history',2);
 COMMIT;

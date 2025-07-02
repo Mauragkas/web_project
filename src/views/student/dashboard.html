@@ -307,8 +307,8 @@
                             <h3 class="text-xl font-medium mb-2">
                                 Under Examination Actions
                             </h3>
-                            <!-- Upload Materials Form Start -->
-                            <div class="mb-4">
+                            <!-- Upload Materials Form (existing) -->
+                            <div class="mb-6">
                                 <form
                                     id="uploadMaterialsForm"
                                     enctype="multipart/form-data"
@@ -361,51 +361,70 @@
                                     ></div>
                                 </form>
                             </div>
-                            <!-- Upload Materials Form End -->
 
-                            <div class="mb-4">
-                                <h4 class="text-lg font-medium mb-2">
-                                    Examination Details
+                            <!-- NEW: Presentation Details Form -->
+                            <div class="mb-6 p-4 bg-blue-50 rounded-md">
+                                <h4 class="text-lg font-medium mb-4">
+                                    Record Presentation Details
                                 </h4>
-                                <div
-                                    class="bg-white bg-opacity-60 p-3 rounded-md mb-2"
+                                <form
+                                    id="presentationDetailsForm"
+                                    class="space-y-4"
                                 >
-                                    <div class="mb-2">
-                                        <label
-                                            for="exam-date"
-                                            class="block text-gray-700 font-semibold mb-2"
-                                            >Date</label
-                                        >
-                                        <input
-                                            type="date"
-                                            id="exam-date"
-                                            name="exam-date"
-                                            class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                                        />
+                                    <div
+                                        class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                                    >
+                                        <div>
+                                            <label
+                                                for="presentationDate"
+                                                class="block text-gray-700 font-semibold mb-2"
+                                            >
+                                                Presentation Date
+                                                <span class="text-red-500"
+                                                    >*</span
+                                                >
+                                            </label>
+                                            <input
+                                                type="date"
+                                                id="presentationDate"
+                                                name="presentationDate"
+                                                class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label
+                                                for="presentationTime"
+                                                class="block text-gray-700 font-semibold mb-2"
+                                            >
+                                                Presentation Time
+                                                <span class="text-red-500"
+                                                    >*</span
+                                                >
+                                            </label>
+                                            <input
+                                                type="time"
+                                                id="presentationTime"
+                                                name="presentationTime"
+                                                class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"
+                                                required
+                                            />
+                                        </div>
                                     </div>
-                                    <div class="mb-2">
+
+                                    <div>
                                         <label
-                                            for="exam-time"
+                                            for="examinationMethod"
                                             class="block text-gray-700 font-semibold mb-2"
-                                            >Time</label
                                         >
-                                        <input
-                                            type="time"
-                                            id="exam-time"
-                                            name="exam-time"
-                                            class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                                        />
-                                    </div>
-                                    <div class="mb-2">
-                                        <label
-                                            for="exam-method"
-                                            class="block text-gray-700 font-semibold mb-2"
-                                            >Method</label
-                                        >
+                                            Examination Method
+                                            <span class="text-red-500">*</span>
+                                        </label>
                                         <select
-                                            id="exam-method"
-                                            name="exam-method"
-                                            class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                            id="examinationMethod"
+                                            name="examinationMethod"
+                                            class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"
+                                            required
                                         >
                                             <option value="in-person">
                                                 In-person
@@ -415,38 +434,62 @@
                                             </option>
                                         </select>
                                     </div>
-                                    <div id="in-person-details" class="mb-2">
+
+                                    <div id="locationSection">
                                         <label
-                                            for="exam-room"
+                                            for="location"
                                             class="block text-gray-700 font-semibold mb-2"
-                                            >Examination Room</label
                                         >
+                                            Examination Room
+                                            <span class="text-red-500">*</span>
+                                        </label>
                                         <input
                                             type="text"
-                                            id="exam-room"
-                                            name="exam-room"
+                                            id="location"
+                                            name="location"
+                                            placeholder="e.g., Room A102, Engineering Building"
                                             class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"
                                         />
                                     </div>
-                                    <div
-                                        id="online-details"
-                                        class="mb-2 hidden"
-                                    >
+
+                                    <div id="connectionSection" class="hidden">
                                         <label
-                                            for="connection-link"
+                                            for="connectionLink"
                                             class="block text-gray-700 font-semibold mb-2"
-                                            >Connection Link</label
                                         >
+                                            Connection Link
+                                            <span class="text-red-500">*</span>
+                                        </label>
                                         <input
                                             type="url"
-                                            id="connection-link"
-                                            name="connection-link"
+                                            id="connectionLink"
+                                            name="connectionLink"
+                                            placeholder="e.g., https://meet.google.com/..."
                                             class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"
                                         />
                                     </div>
-                                </div>
+
+                                    <input
+                                        type="hidden"
+                                        id="thesisIdForPresentation"
+                                        name="thesisId"
+                                    />
+
+                                    <button
+                                        type="submit"
+                                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200"
+                                    >
+                                        Save Presentation Details
+                                    </button>
+
+                                    <div
+                                        id="presentationDetailsMessage"
+                                        class="mt-2 text-sm font-medium hidden"
+                                    ></div>
+                                </form>
                             </div>
 
+                            <!-- Existing examination details display and other sections -->
                             <div class="mt-4 border-t pt-4">
                                 <h4 class="text-lg font-medium mb-2">
                                     Post-Examination

@@ -379,6 +379,15 @@
                     // Create HTML for announcements
                     let html = "";
                     data.announcements.forEach((a) => {
+                        let locationDisplay = "Not specified";
+                        if (a.presentation_location_type === "online") {
+                            locationDisplay = a.connection_link
+                                ? `<a href="${a.connection_link}" target="_blank" class="text-indigo-600 underline">${a.connection_link}</a>`
+                                : "Not specified";
+                        } else {
+                            locationDisplay =
+                                a.presentation_location || "Not specified";
+                        }
                         html += `
                             <div class="timeline-item mb-8 pb-6">
                               <div class="bg-white bg-opacity-60 p-6 rounded-md shadow-md">
@@ -388,7 +397,7 @@
                                 <p class="text-gray-700"><strong>Committee:</strong> ${a.committee_members || "Not assigned"}</p>
                                 <p class="text-gray-700 mt-3"><strong>Date:</strong> ${a.presentation_date || "Not scheduled"}</p>
                                 <p class="text-gray-700"><strong>Time:</strong> ${a.presentation_time || "Not scheduled"}</p>
-                                <p class="text-gray-700"><strong>Location/Link:</strong> ${a.presentation_location || "Not specified"}</p>
+                                <p class="text-gray-700"><strong>Location/Link:</strong> ${locationDisplay}</p>
                               </div>
                             </div>
                         `;

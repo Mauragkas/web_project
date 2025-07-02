@@ -242,7 +242,6 @@ function getThesisNotesForInstructor(thesisId, instructorId) {
 }
 
 function getPublicPresentationAnnouncements({ startDate, endDate }) {
-  // Only show completed or under examination theses with a scheduled presentation
   let query = `
     SELECT
       t.id as thesis_id,
@@ -252,7 +251,9 @@ function getPublicPresentationAnnouncements({ startDate, endDate }) {
       GROUP_CONCAT(cm2.full_name, ', ') as committee_members,
       t.presentation_date,
       t.presentation_time,
-      t.presentation_location
+      t.presentation_location,
+      t.connection_link,
+      t.presentation_location_type
     FROM theses t
     JOIN thesis_topics tt ON t.topic_id = tt.id
     JOIN users u ON t.student_id = u.id

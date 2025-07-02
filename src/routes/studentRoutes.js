@@ -64,4 +64,18 @@ router.post(
   studentController.uploadMaterials,
 );
 
+// API: Get presentation details for thesis
+router.get(
+  "/api/student/thesis/:thesisId/presentation-details",
+  authMiddleware("student"),
+  studentController.getPresentationDetails,
+);
+
+// API: Submit presentation details
+router.post(
+  "/api/student/thesis/:thesisId/presentation",
+  authMiddleware("student"),
+  studentController.submitPresentationDetails,
+);
+
 module.exports = router;

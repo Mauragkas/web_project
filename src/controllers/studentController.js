@@ -156,12 +156,10 @@ class StudentController {
           .json({ success: false, message: "Access denied" });
       }
       if (thesis.status !== "Under Examination") {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Thesis must be Under Examination",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Thesis must be Under Examination",
+        });
       }
 
       // Call service to handle upload
@@ -178,15 +176,130 @@ class StudentController {
           message: "Materials uploaded successfully",
         });
       } else {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: result.message || "Failed to upload materials",
-          });
+        return res.status(400).json({
+          success: false,
+          message: result.message || "Failed to upload materials",
+        });
       }
     } catch (error) {
       console.error("Upload materials error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+
+  async getPresentationDetails(req, res) {
+    try {
+      const studentId = req.session.userId;
+      const thesisId = req.params.thesisId;
+
+      // Verify thesis belongs to student and is Under Examination
+      const thesis = await require("../services/thesisService").getThesisById(
+        thesisId,
+      );
+
+      if (!thesis || thesis.student_id != studentId) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied: This thesis doesn't belong to you",
+        });
+      }
+
+      if (thesis.status !== "Under Examination") {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Presentation details can only be recorded for theses under examination",
+        });
+      }
+
+      const presentationDetails =
+        await studentService.retrievePresentationDetails(studentId, thesisId);
+
+      return res.json({
+        success: true,
+        details: presentationDetails,
+      });
+    } catch (error) {
+      console.error("Error getting presentation details:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+
+  async submitPresentationDetails(req, res) {
+    try {
+      const studentId = req.session.userId;
+      const thesisId = req.params.thesisId;
+      const presentationData = req.body;
+
+      // Validate required fields
+      const {
+        presentationDate,
+        presentationTime,
+        examinationMethod,
+        location,
+        connectionLink,
+      } = presentationData;
+
+      if (!presentationDate || !presentationTime || !examinationMethod) {
+        return res.status(400).json({
+          success: false,
+          message: "Date, time, and examination method are required",
+        });
+      }
+
+      if (examinationMethod === "in-person" && !location) {
+        return res.status(400).json({
+          success: false,
+          message: "Location is required for in-person examinations",
+        });
+      }
+
+      if (examinationMethod === "online" && !connectionLink) {
+        return res.status(400).json({
+          success: false,
+          message: "Connection link is required for online examinations",
+        });
+      }
+
+      // Verify thesis belongs to student and is Under Examination
+      const thesis = await require("../services/thesisService").getThesisById(
+        thesisId,
+      );
+
+      if (!thesis || thesis.student_id != studentId) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied: This thesis doesn't belong to you",
+        });
+      }
+
+      if (thesis.status !== "Under Examination") {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Presentation details can only be recorded for theses under examination",
+        });
+      }
+
+      const result = await studentService.savePresentationDetails(
+        studentId,
+        thesisId,
+        presentationData,
+      );
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: "Presentation details recorded successfully",
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: result.message || "Failed to save presentation details",
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting presentation details:", error);
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }

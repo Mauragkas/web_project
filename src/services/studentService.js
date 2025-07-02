@@ -135,6 +135,117 @@ class StudentService {
       return { success: false, message: "Internal server error" };
     }
   }
+
+  async retrievePresentationDetails(studentId, thesisId) {
+    try {
+      // Verify ownership first
+      const thesis = await getOne(
+        "SELECT id, status FROM theses WHERE id = ? AND student_id = ?",
+        [thesisId, studentId],
+      );
+
+      if (!thesis) {
+        throw new Error("Thesis not found or access denied");
+      }
+
+      if (thesis.status !== "Under Examination") {
+        throw new Error(
+          "Thesis must be Under Examination to view presentation details",
+        );
+      }
+
+      // Get presentation details
+      const details = await getOne(
+        `SELECT
+          presentation_date,
+          presentation_time,
+          presentation_location,
+          presentation_location_type,
+          connection_link
+        FROM theses
+        WHERE id = ?`,
+        [thesisId],
+      );
+
+      return {
+        presentationDate: details?.presentation_date || "",
+        presentationTime: details?.presentation_time || "",
+        examinationMethod: details?.presentation_location_type || "in-person",
+        location: details?.presentation_location || "",
+        connectionLink: details?.connection_link || "",
+      };
+    } catch (error) {
+      console.error("Error retrieving presentation details:", error);
+      throw error;
+    }
+  }
+
+  async savePresentationDetails(studentId, thesisId, presentationData) {
+    try {
+      const {
+        presentationDate,
+        presentationTime,
+        examinationMethod,
+        location,
+        connectionLink,
+      } = presentationData;
+
+      // Verify ownership and status
+      const thesis = await getOne(
+        "SELECT id, status FROM theses WHERE id = ? AND student_id = ?",
+        [thesisId, studentId],
+      );
+
+      if (!thesis) {
+        return { success: false, message: "Thesis not found or access denied" };
+      }
+
+      if (thesis.status !== "Under Examination") {
+        return {
+          success: false,
+          message:
+            "Thesis must be Under Examination to record presentation details",
+        };
+      }
+
+      // Prepare location and connection link based on examination method
+      const finalLocation = examinationMethod === "in-person" ? location : "";
+      const finalConnectionLink =
+        examinationMethod === "online" ? connectionLink : "";
+
+      // Update presentation details
+      const result = await executeRun(
+        `UPDATE theses
+         SET presentation_date = ?,
+             presentation_time = ?,
+             presentation_location = ?,
+             presentation_location_type = ?,
+             connection_link = ?
+         WHERE id = ? AND student_id = ?`,
+        [
+          presentationDate,
+          presentationTime,
+          finalLocation,
+          examinationMethod,
+          finalConnectionLink,
+          thesisId,
+          studentId,
+        ],
+      );
+
+      if (result.changes > 0) {
+        return { success: true };
+      } else {
+        return {
+          success: false,
+          message: "No changes made or thesis not found",
+        };
+      }
+    } catch (error) {
+      console.error("Error saving presentation details:", error);
+      return { success: false, message: "Internal server error" };
+    }
+  }
 }
 
 module.exports = new StudentService();

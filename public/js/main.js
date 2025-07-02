@@ -213,6 +213,15 @@ async function showManageThesisActions() {
       // Pre-fill thesisId for upload form if present
       const thesisIdInput = document.getElementById("thesisIdForUpload");
       if (thesisIdInput) thesisIdInput.value = data.thesis.thesis_id;
+      // Pre-fill thesisId for presentation form
+      const thesisIdPresentationInput = document.getElementById(
+        "thesisIdForPresentation",
+      );
+      if (thesisIdPresentationInput)
+        thesisIdPresentationInput.value = data.thesis.thesis_id;
+
+      // Load existing presentation details
+      loadPresentationDetails();
     } else if (status === "Completed") {
       const ca = document.getElementById("completed-actions");
       if (ca) ca.classList.remove("hidden");
@@ -220,6 +229,125 @@ async function showManageThesisActions() {
     // ... handle other statuses as needed
   } catch (err) {
     // Optionally handle error
+  }
+}
+
+// --- Presentation Details Form Submission (Student) ---
+document
+  .getElementById("presentationDetailsForm")
+  ?.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const form = e.target;
+    const messageDiv = document.getElementById("presentationDetailsMessage");
+    messageDiv.classList.add("hidden");
+    messageDiv.textContent = "";
+
+    const thesisId =
+      window.studentThesisId ||
+      document.getElementById("thesisIdForPresentation").value;
+    if (!thesisId) {
+      messageDiv.textContent = "No thesis found.";
+      messageDiv.classList.remove("hidden", "text-green-600");
+      messageDiv.classList.add("text-red-600");
+      return;
+    }
+
+    const presentationData = {
+      presentationDate: form.presentationDate.value,
+      presentationTime: form.presentationTime.value,
+      examinationMethod: form.examinationMethod.value,
+      location: form.location.value,
+      connectionLink: form.connectionLink.value,
+    };
+
+    try {
+      const res = await fetch(
+        `/student/api/student/thesis/${thesisId}/presentation`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(presentationData),
+        },
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        messageDiv.textContent = "Presentation details saved successfully!";
+        messageDiv.classList.remove("hidden", "text-red-600");
+        messageDiv.classList.add("text-green-600");
+      } else {
+        messageDiv.textContent =
+          data.message || "Failed to save presentation details.";
+        messageDiv.classList.remove("hidden", "text-green-600");
+        messageDiv.classList.add("text-red-600");
+      }
+    } catch (err) {
+      messageDiv.textContent = "Server error. Please try again.";
+      messageDiv.classList.remove("hidden", "text-green-600");
+      messageDiv.classList.add("text-red-600");
+    }
+  });
+
+// Examination Method Change Handler
+document
+  .getElementById("examinationMethod")
+  ?.addEventListener("change", function () {
+    const locationSection = document.getElementById("locationSection");
+    const connectionSection = document.getElementById("connectionSection");
+    const locationInput = document.getElementById("location");
+    const connectionInput = document.getElementById("connectionLink");
+
+    if (this.value === "in-person") {
+      locationSection.classList.remove("hidden");
+      connectionSection.classList.add("hidden");
+      locationInput.required = true;
+      connectionInput.required = false;
+      connectionInput.value = "";
+    } else {
+      locationSection.classList.add("hidden");
+      connectionSection.classList.remove("hidden");
+      locationInput.required = false;
+      connectionInput.required = true;
+      locationInput.value = "";
+    }
+  });
+
+// Load existing presentation details when showing Under Examination actions
+async function loadPresentationDetails() {
+  if (!window.studentThesisId) return;
+
+  try {
+    const res = await fetch(
+      `/student/api/student/thesis/${window.studentThesisId}/presentation-details`,
+    );
+    const data = await res.json();
+
+    if (data.success && data.details) {
+      const details = data.details;
+
+      // Pre-fill form with existing details
+      document.getElementById("presentationDate").value =
+        details.presentationDate || "";
+      document.getElementById("presentationTime").value =
+        details.presentationTime || "";
+      document.getElementById("examinationMethod").value =
+        details.examinationMethod || "in-person";
+      document.getElementById("location").value = details.location || "";
+      document.getElementById("connectionLink").value =
+        details.connectionLink || "";
+
+      // Set thesis ID for form submission
+      document.getElementById("thesisIdForPresentation").value =
+        window.studentThesisId;
+
+      // Trigger examination method change to show/hide appropriate fields
+      document
+        .getElementById("examinationMethod")
+        .dispatchEvent(new Event("change"));
+    }
+  } catch (err) {
+    console.log("No existing presentation details found or error loading them");
   }
 }
 
@@ -742,6 +870,16 @@ async function loadPublicAnnouncements() {
     // Create HTML for announcements
     let html = "";
     data.announcements.forEach((a) => {
+      // Determine the correct display for Location/Link
+      let locationDisplay = "Not specified";
+      if (a.presentation_location_type === "online") {
+        locationDisplay = a.connection_link
+          ? `<a href="${a.connection_link}" target="_blank" class="text-indigo-600 underline">${a.connection_link}</a>`
+          : "Not specified";
+      } else {
+        locationDisplay = a.presentation_location || "Not specified";
+      }
+
       html += `
         <div class="timeline-item mb-8 pb-6">
           <div class="bg-white bg-opacity-60 p-6 rounded-md shadow-md">
@@ -751,7 +889,7 @@ async function loadPublicAnnouncements() {
             <p class="text-gray-700"><strong>Committee:</strong> ${a.committee_members || "Not assigned"}</p>
             <p class="text-gray-700 mt-3"><strong>Date:</strong> ${a.presentation_date || "Not scheduled"}</p>
             <p class="text-gray-700"><strong>Time:</strong> ${a.presentation_time || "Not scheduled"}</p>
-            <p class="text-gray-700"><strong>Location/Link:</strong> ${a.presentation_location || "Not specified"}</p>
+            <p class="text-gray-700"><strong>Location/Link:</strong> ${locationDisplay}</p>
           </div>
         </div>
       `;

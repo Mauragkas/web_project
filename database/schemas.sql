@@ -55,6 +55,8 @@ CREATE TABLE IF NOT EXISTS theses (
     presentation_date DATE,
     presentation_time TIME,
     presentation_location TEXT,
+    presentation_location_type TEXT,
+    connection_link TEXT,
     cancellation_reason TEXT,
     ga_number TEXT,
     ga_year TEXT,
