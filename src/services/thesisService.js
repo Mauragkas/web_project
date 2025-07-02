@@ -527,6 +527,24 @@ class ThesisService {
   async retrievePresentationDetailsForAnnouncement(thesisId, instructorId) {
     return getThesisPresentationDetailsForAnnouncement(thesisId, instructorId);
   }
+
+  async getThesisDraftPath(thesisId) {
+    try {
+      const thesis = await getOne(
+        `SELECT draft_path, status FROM theses WHERE id = ?`,
+        [thesisId],
+      );
+
+      if (!thesis || !thesis.draft_path) {
+        return null;
+      }
+
+      return thesis.draft_path;
+    } catch (error) {
+      console.error("Error getting thesis draft path:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new ThesisService();

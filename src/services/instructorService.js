@@ -194,6 +194,7 @@ class InstructorService {
         t.grade,
         t.ap_number,
         t.library_link,
+        t.draft_path,
         tt.title as topic_title,
         tt.description as topic_description,
         tt.document_path as topic_document_path,
@@ -458,6 +459,46 @@ class InstructorService {
       console.error("Error setting presentation details:", error);
       return { success: false, message: "Internal server error" };
     }
+  }
+
+  async retrieveThesisDraftPath(instructorId, thesisId) {
+    try {
+      // First check if this instructor is supervisor or committee member for this thesis
+      const hasAccess = await this.instructorHasAccessToThesis(
+        instructorId,
+        thesisId,
+      );
+
+      if (!hasAccess) {
+        throw new Error(
+          "Access denied: Not authorized to view this thesis draft",
+        );
+      }
+
+      // Get draft path
+      const draftPath = await thesisService.getThesisDraftPath(thesisId);
+
+      if (!draftPath) {
+        throw new Error("No draft has been uploaded for this thesis");
+      }
+
+      return draftPath;
+    } catch (error) {
+      console.error("Error retrieving thesis draft:", error);
+      throw error;
+    }
+  }
+
+  async instructorHasAccessToThesis(instructorId, thesisId) {
+    const thesis = await getOne(
+      `SELECT t.id FROM theses t
+       LEFT JOIN committee_members cm ON cm.thesis_id = t.id
+       WHERE t.id = ? AND (t.supervisor_id = ? OR cm.instructor_id = ?)
+       LIMIT 1`,
+      [thesisId, instructorId, instructorId],
+    );
+
+    return !!thesis;
   }
 }
 

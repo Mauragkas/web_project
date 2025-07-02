@@ -915,6 +915,26 @@ async function showThesisDetailsModal(thesisId) {
         <p><span class="font-semibold">Attached File:</span> ${t.topic_document_path ? `<a href="${t.topic_document_path}" target="_blank" class="text-indigo-600 underline">PDF</a>` : "No file"}</p>
 
         ${
+          t.status === "Under Examination"
+            ? `
+        <div class="mt-4 p-4 bg-blue-50 rounded-md">
+          <h4 class="font-semibold text-lg mb-2">Thesis Draft</h4>
+          ${
+            t.draft_path
+              ? `<a href="${t.draft_path}" target="_blank" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md shadow-sm transition-colors">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              View/Download Thesis Draft
+            </a>`
+              : `<p class="text-gray-600">Student has not uploaded a thesis draft yet.</p>`
+          }
+        </div>
+        `
+            : ""
+        }
+
+        ${
           t.status === "Cancelled"
             ? `
           <div class="mt-4 p-4 bg-red-100 rounded-md">

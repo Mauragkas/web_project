@@ -526,6 +526,43 @@ class InstructorController {
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }
+
+  async getThesisDraft(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const thesisId = req.params.thesisId;
+
+      // Get thesis details (including draft path)
+      const thesis = await instructorService.getThesisDetailsForInstructor(
+        thesisId,
+        instructorId,
+      );
+
+      if (!thesis) {
+        return res.status(404).json({
+          success: false,
+          message: "Thesis not found or access denied",
+        });
+      }
+
+      // Return the draft path as part of the thesis details
+      return res.json({
+        success: true,
+        draftPath: thesis.draftPath || thesis.draft_path || null,
+        thesis, // Optionally include full thesis details
+      });
+    } catch (error) {
+      console.error("Error getting thesis draft:", error);
+      return res
+        .status(
+          error.message && error.message.includes("Access denied") ? 403 : 500,
+        )
+        .json({
+          success: false,
+          message: error.message || "Server error retrieving thesis draft",
+        });
+    }
+  }
 }
 
 module.exports = new InstructorController();

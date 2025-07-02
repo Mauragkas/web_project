@@ -179,4 +179,10 @@ router.post(
   instructorController.setPresentationDetails,
 );
 
+router.get(
+  "/api/instructor/theses/:thesisId/draft",
+  authMiddleware("instructor"),
+  instructorController.getThesisDraft,
+);
+
 module.exports = router;
