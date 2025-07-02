@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS theses (
     cancellation_date TIMESTAMP,
     draft_path TEXT,
     external_links TEXT,
+    grading_active BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (topic_id) REFERENCES thesis_topics(id),
     FOREIGN KEY (student_id) REFERENCES users(id),
     FOREIGN KEY (supervisor_id) REFERENCES users(id)
@@ -98,4 +99,19 @@ CREATE TABLE IF NOT EXISTS thesis_notes (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (thesis_id) REFERENCES theses(id),
     FOREIGN KEY (instructor_id) REFERENCES users(id)
+);
+
+-- grades table for storing instructor grades
+CREATE TABLE IF NOT EXISTS grades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    thesis_id INTEGER NOT NULL,
+    instructor_id INTEGER NOT NULL,
+    grade_value REAL NOT NULL CHECK(grade_value >= 0 AND grade_value <= 10),
+    criteria_json TEXT, -- JSON string containing detailed criteria scores
+    comments TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (thesis_id) REFERENCES theses(id),
+    FOREIGN KEY (instructor_id) REFERENCES users(id),
+    UNIQUE(thesis_id, instructor_id)
 );

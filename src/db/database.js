@@ -295,6 +295,85 @@ function getThesisPresentationDetailsForAnnouncement(thesisId, instructorId) {
   return getOne(query, [thesisId, instructorId]);
 }
 
+// Get all grades for a thesis
+function getThesisGrades(thesisId) {
+  const query = `
+    SELECT
+      g.instructor_id,
+      g.grade_value,
+      g.criteria_json,
+      g.comments,
+      g.created_at,
+      u.full_name as instructor_name,
+      CASE
+        WHEN t.supervisor_id = g.instructor_id THEN 'supervisor'
+        ELSE 'committee'
+      END as instructor_role
+    FROM grades g
+    JOIN users u ON g.instructor_id = u.id
+    JOIN theses t ON g.thesis_id = t.id
+    WHERE g.thesis_id = ?
+    ORDER BY g.created_at DESC
+  `;
+  return executeQuery(query, [thesisId]);
+}
+
+// Insert or update grade
+function upsertGrade(
+  thesisId,
+  instructorId,
+  gradeValue,
+  criteriaJson,
+  comments,
+) {
+  const query = `
+    INSERT OR REPLACE INTO grades
+    (thesis_id, instructor_id, grade_value, criteria_json, comments, updated_at)
+    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+  `;
+  return executeRun(query, [
+    thesisId,
+    instructorId,
+    gradeValue,
+    criteriaJson,
+    comments,
+  ]);
+}
+
+// Count submitted grades for a thesis
+function countSubmittedGrades(thesisId) {
+  return getOne(
+    `SELECT COUNT(DISTINCT instructor_id) as count FROM grades WHERE thesis_id = ?`,
+    [thesisId],
+  );
+}
+
+// Count expected graders (supervisor + committee members)
+function countExpectedGraders(thesisId) {
+  const query = `
+    SELECT
+      (1 + COUNT(cm.instructor_id)) as count
+    FROM theses t
+    LEFT JOIN committee_members cm ON cm.thesis_id = t.id AND cm.status = 'Accepted'
+    WHERE t.id = ?
+    GROUP BY t.id
+  `;
+  return getOne(query, [thesisId]);
+}
+
+// Activate grading for a thesis
+function activateThesisGrading(thesisId, supervisorId) {
+  return executeRun(
+    `UPDATE theses SET grading_active = TRUE WHERE id = ? AND supervisor_id = ?`,
+    [thesisId, supervisorId],
+  );
+}
+
+// Check if grading is active
+function isGradingActive(thesisId) {
+  return getOne(`SELECT grading_active FROM theses WHERE id = ?`, [thesisId]);
+}
+
 module.exports = {
   executeQuery,
   executeRun,
@@ -327,4 +406,10 @@ module.exports = {
   getPublicPresentationAnnouncements,
   getThesisById,
   getThesisPresentationDetailsForAnnouncement,
+  getThesisGrades,
+  upsertGrade,
+  countSubmittedGrades,
+  countExpectedGraders,
+  activateThesisGrading,
+  isGradingActive,
 };

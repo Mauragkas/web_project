@@ -185,4 +185,25 @@ router.get(
   instructorController.getThesisDraft,
 );
 
+// API: Activate grading for a thesis (supervisor only)
+router.post(
+  "/api/instructor/thesis/:thesisId/activate-grading",
+  authMiddleware("instructor"),
+  instructorController.activateGrading,
+);
+
+// API: Get all grades for a thesis
+router.get(
+  "/api/instructor/thesis/:thesisId/grades",
+  authMiddleware("instructor"),
+  instructorController.getThesisGrades,
+);
+
+// API: Submit instructor's grade for a thesis
+router.post(
+  "/api/instructor/thesis/:thesisId/submit-my-grade",
+  authMiddleware("instructor"),
+  instructorController.submitMyGrade,
+);
+
 module.exports = router;

@@ -563,6 +563,102 @@ class InstructorController {
         });
     }
   }
+
+  async activateGrading(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const thesisId = req.params.thesisId;
+
+      const result = await instructorService.activateThesisGrading(
+        instructorId,
+        thesisId,
+      );
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: "Grading activated successfully",
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: result.message || "Failed to activate grading",
+        });
+      }
+    } catch (error) {
+      console.error("Activate grading error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+
+  async getThesisGrades(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const thesisId = req.params.thesisId;
+
+      const result = await instructorService.retrieveAllThesisGrades(
+        thesisId,
+        instructorId,
+      );
+
+      return res.json({
+        success: true,
+        grades: result.grades,
+        userRole: result.userRole,
+        canActivate: result.canActivate,
+      });
+    } catch (error) {
+      console.error("Get thesis grades error:", error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || "Failed to retrieve grades",
+      });
+    }
+  }
+
+  async submitMyGrade(req, res) {
+    try {
+      const instructorId = req.session.userId;
+      const thesisId = req.params.thesisId;
+      const gradeData = req.body;
+
+      // Validate required fields
+      if (
+        !gradeData.gradeValue ||
+        gradeData.gradeValue < 0 ||
+        gradeData.gradeValue > 10
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Valid grade value (0-10) is required",
+        });
+      }
+
+      const result = await instructorService.recordMyThesisGrade(
+        instructorId,
+        thesisId,
+        gradeData,
+      );
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: result.message,
+          allGradesSubmitted: result.allGradesSubmitted,
+          submittedCount: result.submittedCount,
+          expectedCount: result.expectedCount,
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: result.message,
+        });
+      }
+    } catch (error) {
+      console.error("Submit grade error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
 }
 
 module.exports = new InstructorController();

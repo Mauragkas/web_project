@@ -327,24 +327,360 @@ function handleExamMethodChange() {
 /**
  * Handle thesis details viewing in secretariat dashboard
  */
-function showThesisDetails() {
+async function showThesisDetails(thesisId) {
   const thesisDetails = document.getElementById("thesis-details");
-  if (thesisDetails) {
-    thesisDetails.classList.remove("hidden");
+  if (!thesisDetails) return;
 
-    // In a real app, you'd fetch the specific thesis details here
-    // and show the correct status-actions div based on the thesis status
+  thesisDetails.classList.remove("hidden");
 
-    // Example: Show actions for an 'Active' thesis
-    const activeActions = document.getElementById("secretariat-active-actions");
-    const examinationActions = document.getElementById(
-      "secretariat-under-examination-actions",
+  // Fetch thesis details (replace with your actual API endpoint)
+  let t = null;
+  try {
+    const res = await fetch(
+      `/secretariat/api/secretariat/theses/${thesisId}/details`,
+    );
+    const data = await res.json();
+    if (!data.success) {
+      thesisDetails.innerHTML = `<div class="text-red-500 text-center">${data.message || "Failed to load thesis details."}</div>`;
+      return;
+    }
+    t = data.thesis;
+  } catch (err) {
+    thesisDetails.innerHTML = `<div class="text-red-500 text-center">Server error loading thesis details.</div>`;
+    return;
+  }
+
+  // Render thesis details (simplified for brevity)
+  thesisDetails.innerHTML = `
+     <div>
+       <h3 class="text-xl font-semibold mb-2">${t.topic_title}</h3>
+       <p><span class="font-semibold">Student:</span> ${t.student_name} (${t.student_email || "-"})</p>
+       <p><span class="font-semibold">Supervisor:</span> ${t.supervisor_name} (${t.supervisor_email || "-"})</p>
+       <p><span class="font-semibold">Committee:</span> ${t.committee_members || "-"}</p>
+       <p><span class="font-semibold">Status:</span> ${t.status}</p>
+       <p><span class="font-semibold">Assigned Date:</span> ${t.assigned_date ? new Date(t.assigned_date).toLocaleDateString() : "-"}</p>
+       <p><span class="font-semibold">Completion Date:</span> ${t.completion_date ? new Date(t.completion_date).toLocaleDateString() : "-"}</p>
+       <p><span class="font-semibold">Grade:</span> ${t.grade || "-"}</p>
+       <p><span class="font-semibold">AP Number:</span> ${t.ap_number || "-"}</p>
+       <p><span class="font-semibold">Library Link:</span> ${t.library_link ? `<a href="${t.library_link}" target="_blank" class="text-indigo-600 underline">Nemertis</a>` : "-"}</p>
+       <p><span class="font-semibold">Description:</span> ${t.topic_description || "-"}</p>
+       <p><span class="font-semibold">Attached File:</span> ${t.topic_document_path ? `<a href="${t.topic_document_path}" target="_blank" class="text-indigo-600 underline">PDF</a>` : "No file"}</p>
+     </div>
+   `;
+
+  // Show the correct status-actions div based on the thesis status
+  const activeActions = document.getElementById("secretariat-active-actions");
+  const examinationActions = document.getElementById(
+    "secretariat-under-examination-actions",
+  );
+  if (activeActions) activeActions.classList.add("hidden");
+  if (examinationActions) examinationActions.classList.add("hidden");
+
+  if (t.status === "Active" && activeActions) {
+    activeActions.classList.remove("hidden");
+  } else if (t.status === "Under Examination" && examinationActions) {
+    examinationActions.classList.remove("hidden");
+  }
+
+  // Add grading section for Under Examination theses
+  if (t.status === "Under Examination") {
+    // Grading section
+    const gradingSection = document.createElement("div");
+    gradingSection.className = "mt-6 pt-4 border-t";
+    gradingSection.innerHTML = `
+      <h4 class="text-lg font-medium mb-2">Thesis Grading</h4>
+      <div id="grading-controls-${thesisId}" class="mb-4">
+        <button
+          id="activateGradingBtn-${thesisId}"
+          class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 mr-2 hidden"
+        >
+          Activate Grading
+        </button>
+        <button
+          id="viewGradesBtn-${thesisId}"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 mr-2"
+        >
+          View/Submit Grades
+        </button>
+      </div>
+      <div id="grades-container-${thesisId}" class="hidden">
+        <!-- Grades will be loaded here -->
+      </div>
+    `;
+    thesisDetails.appendChild(gradingSection);
+
+    // Load grading status and setup handlers
+    await setupGradingInterface(thesisId);
+  }
+}
+
+// Grading interface logic for secretariat/instructor
+async function setupGradingInterface(thesisId) {
+  try {
+    const response = await fetch(
+      `/instructor/api/instructor/thesis/${thesisId}/grades`,
+    );
+    const data = await response.json();
+
+    const activateBtn = document.getElementById(
+      `activateGradingBtn-${thesisId}`,
+    );
+    const viewGradesBtn = document.getElementById(`viewGradesBtn-${thesisId}`);
+    const gradesContainer = document.getElementById(
+      `grades-container-${thesisId}`,
     );
 
-    if (activeActions && examinationActions) {
-      activeActions.classList.remove("hidden");
-      examinationActions.classList.add("hidden");
+    if (data.success) {
+      // Show activate button only if user can activate and grades are not yet accessible
+      if (data.canActivate && data.grades.length === 0 && activateBtn) {
+        activateBtn.classList.remove("hidden");
+        activateBtn.onclick = () => activateGrading(thesisId);
+      }
+      if (viewGradesBtn) {
+        viewGradesBtn.onclick = () => showGradingInterface(thesisId, data);
+      }
+    } else {
+      // Handle error: grading not activated
+      if (
+        data.message === "Grading not activated" &&
+        data.canActivate &&
+        activateBtn
+      ) {
+        // Show "Activate Grading" button for supervisor
+        activateBtn.classList.remove("hidden");
+        activateBtn.onclick = () => activateGrading(thesisId);
+      } else if (gradesContainer) {
+        // Show error message to committee members
+        gradesContainer.innerHTML = `<div class="text-red-500">${data.message}</div>`;
+        gradesContainer.classList.remove("hidden");
+      }
+      if (viewGradesBtn) {
+        viewGradesBtn.onclick = null;
+      }
     }
+  } catch (error) {
+    console.error("Error setting up grading interface:", error);
+  }
+}
+
+async function activateGrading(thesisId) {
+  try {
+    const response = await fetch(
+      `/instructor/api/instructor/thesis/${thesisId}/activate-grading`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert("Grading activated successfully!");
+      // Refresh the grading interface
+      await setupGradingInterface(thesisId);
+    } else {
+      alert(data.message || "Failed to activate grading");
+    }
+  } catch (error) {
+    console.error("Error activating grading:", error);
+    alert("Server error while activating grading");
+  }
+}
+
+async function showGradingInterface(thesisId, initialData = null) {
+  const container = document.getElementById(`grades-container-${thesisId}`);
+
+  // Load fresh data if not provided
+  if (!initialData) {
+    try {
+      const response = await fetch(
+        `/instructor/api/instructor/thesis/${thesisId}/grades`,
+      );
+      initialData = await response.json();
+    } catch (error) {
+      console.error("Error loading grades:", error);
+      return;
+    }
+  }
+
+  if (!initialData.success) {
+    container.innerHTML = `<div class="text-red-500">${initialData.message}</div>`;
+    container.classList.remove("hidden");
+    return;
+  }
+
+  // Find current user's grade
+  const currentUserId = window.currentUserId;
+  const myGrade = initialData.grades.find(
+    (g) => g.instructor_id == currentUserId,
+  );
+  const otherGrades = initialData.grades.filter(
+    (g) => g.instructor_id != currentUserId,
+  );
+
+  container.innerHTML = `
+     <div class="bg-gray-50 p-4 rounded-md">
+       <h5 class="font-medium mb-3">Submit Your Grade</h5>
+       <form id="gradeForm-${thesisId}" class="space-y-4">
+         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+           <div>
+             <label class="block text-sm font-medium text-gray-700 mb-1">
+               Overall Grade (0-10) <span class="text-red-500">*</span>
+             </label>
+             <input
+               type="number"
+               id="gradeValue-${thesisId}"
+               min="0"
+               max="10"
+               step="0.1"
+               value="${myGrade ? myGrade.grade_value : ""}"
+               class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+               required
+             />
+           </div>
+           <div>
+             <label class="block text-sm font-medium text-gray-700 mb-1">
+               Criteria Details (JSON)
+             </label>
+             <textarea
+               id="criteria-${thesisId}"
+               rows="3"
+               placeholder='{"originality": 8, "methodology": 7, "presentation": 9}'
+               class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+             >${myGrade && myGrade.criteria_json ? myGrade.criteria_json : ""}</textarea>
+           </div>
+         </div>
+         <div>
+           <label class="block text-sm font-medium text-gray-700 mb-1">
+             Comments
+           </label>
+           <textarea
+             id="comments-${thesisId}"
+             rows="3"
+             class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+           >${myGrade ? myGrade.comments || "" : ""}</textarea>
+         </div>
+         <div id="gradeMessage-${thesisId}" class="text-sm hidden"></div>
+         <button
+           type="submit"
+           class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200"
+         >
+           ${myGrade ? "Update Grade" : "Submit Grade"}
+         </button>
+       </form>
+
+       ${
+         otherGrades.length > 0
+           ? `
+         <div class="mt-6 pt-4 border-t">
+           <h5 class="font-medium mb-3">Other Committee Members' Grades</h5>
+           <div class="space-y-2">
+             ${otherGrades
+               .map(
+                 (grade) => `
+               <div class="bg-white p-3 rounded border">
+                 <div class="flex justify-between items-start">
+                   <div>
+                     <span class="font-medium">${grade.instructor_name}</span>
+                     <span class="text-sm text-gray-500">(${grade.instructor_role})</span>
+                   </div>
+                   <span class="text-lg font-bold text-indigo-600">${grade.grade_value}/10</span>
+                 </div>
+                 ${grade.comments ? `<p class="text-sm text-gray-600 mt-1">${grade.comments}</p>` : ""}
+                 <p class="text-xs text-gray-400">Submitted: ${new Date(grade.created_at).toLocaleString()}</p>
+               </div>
+             `,
+               )
+               .join("")}
+           </div>
+         </div>
+       `
+           : ""
+       }
+     </div>
+   `;
+
+  container.classList.remove("hidden");
+
+  // Setup form submission
+  document
+    .getElementById(`gradeForm-${thesisId}`)
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      await submitGrade(thesisId);
+    });
+}
+
+async function submitGrade(thesisId) {
+  const messageEl = document.getElementById(`gradeMessage-${thesisId}`);
+  messageEl.classList.add("hidden");
+
+  const gradeValue = parseFloat(
+    document.getElementById(`gradeValue-${thesisId}`).value,
+  );
+  const criteriaText = document
+    .getElementById(`criteria-${thesisId}`)
+    .value.trim();
+  const comments = document.getElementById(`comments-${thesisId}`).value.trim();
+
+  // Validate criteria JSON if provided
+  let criteria = null;
+  if (criteriaText) {
+    try {
+      criteria = JSON.parse(criteriaText);
+    } catch (error) {
+      messageEl.textContent = "Invalid JSON format in criteria field";
+      messageEl.classList.remove("hidden");
+      messageEl.className = "text-red-600 text-sm";
+      return;
+    }
+  }
+
+  const gradeData = {
+    gradeValue,
+    criteria,
+    comments,
+  };
+
+  try {
+    const response = await fetch(
+      `/instructor/api/instructor/thesis/${thesisId}/submit-my-grade`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(gradeData),
+      },
+    );
+
+    const data = await response.json();
+
+    if (data.success) {
+      messageEl.textContent = data.message;
+      messageEl.className = "text-green-600 text-sm";
+      messageEl.classList.remove("hidden");
+
+      if (data.allGradesSubmitted) {
+        messageEl.textContent +=
+          " All committee members have submitted their grades. Thesis is now marked as 'Graded'.";
+      } else {
+        messageEl.textContent += ` (${data.submittedCount}/${data.expectedCount} grades submitted)`;
+      }
+
+      // Refresh the interface after a delay
+      setTimeout(() => {
+        showGradingInterface(thesisId);
+      }, 2000);
+    } else {
+      messageEl.textContent = data.message || "Failed to submit grade";
+      messageEl.className = "text-red-600 text-sm";
+      messageEl.classList.remove("hidden");
+    }
+  } catch (error) {
+    console.error("Error submitting grade:", error);
+    messageEl.textContent = "Server error while submitting grade";
+    messageEl.className = "text-red-600 text-sm";
+    messageEl.classList.remove("hidden");
   }
 }
 
@@ -898,7 +1234,8 @@ async function showThesisDetailsModal(thesisId) {
     const canChangeToUnderExamination =
       t.status === "Active" && window.currentUserId == t.supervisor_id;
 
-    content.innerHTML = `
+    // --- Build modal content as a single HTML string ---
+    let html = `
       <div>
         <h3 class="text-xl font-semibold mb-2">${t.topic_title}</h3>
         <p><span class="font-semibold">Student:</span> ${t.student_name} (${t.student_email || "-"})</p>
@@ -913,10 +1250,11 @@ async function showThesisDetailsModal(thesisId) {
         <p><span class="font-semibold">Library Link:</span> ${t.library_link ? `<a href="${t.library_link}" target="_blank" class="text-indigo-600 underline">Nemertis</a>` : "-"}</p>
         <p><span class="font-semibold">Description:</span> ${t.topic_description || "-"}</p>
         <p><span class="font-semibold">Attached File:</span> ${t.topic_document_path ? `<a href="${t.topic_document_path}" target="_blank" class="text-indigo-600 underline">PDF</a>` : "No file"}</p>
+    `;
 
-        ${
-          t.status === "Under Examination"
-            ? `
+    // Thesis Draft (Under Examination)
+    if (t.status === "Under Examination") {
+      html += `
         <div class="mt-4 p-4 bg-blue-50 rounded-md">
           <h4 class="font-semibold text-lg mb-2">Thesis Draft</h4>
           ${
@@ -930,136 +1268,134 @@ async function showThesisDetailsModal(thesisId) {
               : `<p class="text-gray-600">Student has not uploaded a thesis draft yet.</p>`
           }
         </div>
-        `
-            : ""
-        }
+      `;
+    }
 
-        ${
-          t.status === "Cancelled"
-            ? `
-          <div class="mt-4 p-4 bg-red-100 rounded-md">
-            <p><span class="font-semibold">Cancellation Date:</span> ${t.cancellation_date ? new Date(t.cancellation_date).toLocaleDateString() : "-"}</p>
-            <p><span class="font-semibold">GA Number:</span> ${t.ga_number || "-"}</p>
-            <p><span class="font-semibold">GA Year:</span> ${t.ga_year || "-"}</p>
-            <p><span class="font-semibold">Cancellation Reason:</span> ${t.cancellation_reason || "-"}</p>
-          </div>
-        `
-            : ""
-        }
+    // Cancelled Thesis Info
+    if (t.status === "Cancelled") {
+      html += `
+        <div class="mt-4 p-4 bg-red-100 rounded-md">
+          <p><span class="font-semibold">Cancellation Date:</span> ${t.cancellation_date ? new Date(t.cancellation_date).toLocaleDateString() : "-"}</p>
+          <p><span class="font-semibold">GA Number:</span> ${t.ga_number || "-"}</p>
+          <p><span class="font-semibold">GA Year:</span> ${t.ga_year || "-"}</p>
+          <p><span class="font-semibold">Cancellation Reason:</span> ${t.cancellation_reason || "-"}</p>
+        </div>
+      `;
+    }
 
-        ${
-          canCancelThesis
-            ? `
-          <div class="mt-6 pt-4 border-t">
-            <h4 class="text-lg font-medium mb-2">Supervisor Actions</h4>
-            <button id="cancelActiveThesisBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200">
-              Cancel Active Thesis
-            </button>
-            <p class="mt-2 text-sm text-gray-600">Note: Cancellation requires General Assembly approval and can only be done after two years.</p>
-          </div>
-        `
-            : ""
-        }
+    // Supervisor Actions: Cancel Active Thesis
+    if (canCancelThesis) {
+      html += `
+        <div class="mt-6 pt-4 border-t">
+          <h4 class="text-lg font-medium mb-2">Supervisor Actions</h4>
+          <button id="cancelActiveThesisBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200">
+            Cancel Active Thesis
+          </button>
+          <p class="mt-2 text-sm text-gray-600">Note: Cancellation requires General Assembly approval and can only be done after two years.</p>
+        </div>
+      `;
+    }
 
-        ${
-          canChangeToUnderExamination
-            ? `
-          <div class="mt-6 pt-4 border-t">
-            <h4 class="text-lg font-medium mb-2">Supervisor Actions</h4>
-            <button id="changeToUnderExaminationBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200">
-              Change Status to Under Examination
-            </button>
-            <p class="mt-2 text-sm text-gray-600">This will move the thesis to the examination phase.</p>
-          </div>
-        `
-            : ""
-        }
+    // Supervisor Actions: Change to Under Examination
+    if (canChangeToUnderExamination) {
+      html += `
+        <div class="mt-6 pt-4 border-t">
+          <h4 class="text-lg font-medium mb-2">Supervisor Actions</h4>
+          <button id="changeToUnderExaminationBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200">
+            Change Status to Under Examination
+          </button>
+          <p class="mt-2 text-sm text-gray-600">This will move the thesis to the examination phase.</p>
+        </div>
+      `;
+    }
 
-        ${
-          t.status === "Under Examination" &&
-          window.currentUserId == t.supervisor_id
-            ? `
-    <div class="mt-6 pt-4 border-t">
-      <h4 class="text-lg font-medium mb-2">Presentation Management</h4>
-
-      ${
-        !t.presentation_date || !t.presentation_time || !t.presentation_location
-          ? `
-          <!-- Set Presentation Details Form -->
-          <div id="presentation-details-form" class="mb-4">
-            <h5 class="font-medium mb-3">Set Presentation Details</h5>
-            <form id="setPresentationDetailsForm" class="space-y-4">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="presentationDate" class="block text-sm font-medium text-gray-700 mb-1">
-                    Presentation Date <span class="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    id="presentationDate"
-                    name="presentationDate"
-                    value="${t.presentation_date || ""}"
-                    required
-                    class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label for="presentationTime" class="block text-sm font-medium text-gray-700 mb-1">
-                    Presentation Time <span class="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="time"
-                    id="presentationTime"
-                    name="presentationTime"
-                    value="${t.presentation_time || ""}"
-                    required
-                    class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                </div>
+    // --- Presentation Details Section (Under Examination, Supervisor only) ---
+    if (
+      t.status === "Under Examination" &&
+      window.currentUserId == t.supervisor_id
+    ) {
+      html += `
+        <div class="mt-6 pt-4 border-t">
+          <h4 class="text-lg font-medium mb-2">Presentation Management</h4>
+          ${
+            !t.presentation_date ||
+            !t.presentation_time ||
+            !t.presentation_location
+              ? `
+              <div id="presentation-details-form" class="mb-4">
+                <h5 class="font-medium mb-3">Set Presentation Details</h5>
+                <form id="setPresentationDetailsForm" class="space-y-4">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label for="presentationDate" class="block text-sm font-medium text-gray-700 mb-1">
+                        Presentation Date <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        id="presentationDate"
+                        name="presentationDate"
+                        value="${t.presentation_date || ""}"
+                        required
+                        class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label for="presentationTime" class="block text-sm font-medium text-gray-700 mb-1">
+                        Presentation Time <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="time"
+                        id="presentationTime"
+                        name="presentationTime"
+                        value="${t.presentation_time || ""}"
+                        required
+                        class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label for="presentationLocation" class="block text-sm font-medium text-gray-700 mb-1">
+                      Presentation Location <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="presentationLocation"
+                      name="presentationLocation"
+                      value="${t.presentation_location || ""}"
+                      placeholder="e.g., Room A102, Engineering Building"
+                      required
+                      class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                  <div id="presentationDetailsMessage" class="text-sm hidden"></div>
+                  <button
+                    type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200"
+                  >
+                    Set Presentation Details
+                  </button>
+                </form>
               </div>
-              <div>
-                <label for="presentationLocation" class="block text-sm font-medium text-gray-700 mb-1">
-                  Presentation Location <span class="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="presentationLocation"
-                  name="presentationLocation"
-                  value="${t.presentation_location || ""}"
-                  placeholder="e.g., Room A102, Engineering Building"
-                  required
-                  class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                />
+              `
+              : `
+              <div class="mb-4 p-4 bg-blue-50 rounded-md">
+                <h5 class="font-medium mb-2">Current Presentation Details</h5>
+                <p><strong>Date:</strong> ${new Date(t.presentation_date).toLocaleDateString()}</p>
+                <p><strong>Time:</strong> ${t.presentation_time}</p>
+                <p><strong>Location:</strong> ${t.presentation_location}</p>
+                <button
+                  id="editPresentationDetailsBtn"
+                  class="mt-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded text-sm"
+                >
+                  Edit Details
+                </button>
               </div>
-              <div id="presentationDetailsMessage" class="text-sm hidden"></div>
-              <button
-                type="submit"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200"
-              >
-                Set Presentation Details
-              </button>
-            </form>
-          </div>
-          `
-          : `
-          <!-- Show existing presentation details -->
-          <div class="mb-4 p-4 bg-blue-50 rounded-md">
-            <h5 class="font-medium mb-2">Current Presentation Details</h5>
-            <p><strong>Date:</strong> ${new Date(t.presentation_date).toLocaleDateString()}</p>
-            <p><strong>Time:</strong> ${t.presentation_time}</p>
-            <p><strong>Location:</strong> ${t.presentation_location}</p>
-            <button
-              id="editPresentationDetailsBtn"
-              class="mt-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded text-sm"
-            >
-              Edit Details
-            </button>
-          </div>
-
-          <!-- Generate Announcement Button -->
+              `
+          }
           <button
             id="generateAnnouncementBtn"
             class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 mb-4"
+            ${!t.presentation_date || !t.presentation_time || !t.presentation_location ? "disabled title='Set all presentation details first'" : ""}
           >
             Generate Announcement Text
           </button>
@@ -1071,45 +1407,60 @@ async function showThesisDetailsModal(thesisId) {
               readonly
             ></textarea>
           </div>
-          `
-      }
-    </div>
-    `
-            : ""
-        }
-      </div>
-    `;
-
-    // Only show notes section for "Active" theses
-    if (t.status === "Active") {
-      const notesSection = document.createElement("div");
-      notesSection.className = "mt-6 border-t pt-4";
-      notesSection.innerHTML = `
-        <h4 class="text-lg font-medium mb-2">Notes (Private)</h4>
-        <form id="modalThesisNoteForm" class="mb-4 flex flex-col md:flex-row gap-2">
-          <textarea id="modalThesisNoteText" maxlength="300" rows="2" class="border border-gray-300 p-2 rounded-md flex-1" placeholder="Add a note (max 300 characters)"></textarea>
-          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Add Note</button>
-        </form>
-        <div id="modalThesisNotesList" class="space-y-2"></div>
-        <div id="modalThesisNoteMessage" class="text-sm mt-2"></div>
+        </div>
       `;
-      content.appendChild(notesSection);
-
-      // Add event listener specifically for the modal form
-      document
-        .getElementById("modalThesisNoteForm")
-        .addEventListener("submit", handleNoteSubmit);
-
-      // Load existing notes
-      loadModalThesisNotes(thesisId);
     }
 
-    // --- Presentation Details Form and Announcement Button Logic ---
+    // --- Grading Section (always for Under Examination) ---
+    if (t.status === "Under Examination") {
+      html += `
+        <div class="mt-6 pt-4 border-t">
+          <h4 class="text-lg font-medium mb-2">Thesis Grading</h4>
+          <div id="grading-controls-${thesisId}" class="mb-4">
+            <button
+              id="activateGradingBtn-${thesisId}"
+              class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 mr-2 hidden"
+            >
+              Activate Grading
+            </button>
+            <button
+              id="viewGradesBtn-${thesisId}"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 mr-2"
+            >
+              View/Submit Grades
+            </button>
+          </div>
+          <div id="grades-container-${thesisId}" class="hidden">
+            <!-- Grades will be loaded here -->
+          </div>
+        </div>
+      `;
+    }
+
+    // Notes section (Active only)
+    if (t.status === "Active") {
+      html += `
+        <div class="mt-6 border-t pt-4">
+          <h4 class="text-lg font-medium mb-2">Notes (Private)</h4>
+          <form id="modalThesisNoteForm" class="mb-4 flex flex-col md:flex-row gap-2">
+            <textarea id="modalThesisNoteText" maxlength="300" rows="2" class="border border-gray-300 p-2 rounded-md flex-1" placeholder="Add a note (max 300 characters)"></textarea>
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Add Note</button>
+          </form>
+          <div id="modalThesisNotesList" class="space-y-2"></div>
+          <div id="modalThesisNoteMessage" class="text-sm mt-2"></div>
+        </div>
+      `;
+    }
+
+    html += `</div>`;
+    content.innerHTML = html;
+
+    // --- Attach event listeners for presentation details ---
     if (
       t.status === "Under Examination" &&
       window.currentUserId == t.supervisor_id
     ) {
-      // Handle setting presentation details
+      // Set Presentation Details form
       const setPresentationForm = document.getElementById(
         "setPresentationDetailsForm",
       );
@@ -1167,7 +1518,7 @@ async function showThesisDetailsModal(thesisId) {
         });
       }
 
-      // Handle editing existing presentation details
+      // Edit Presentation Details button
       const editBtn = document.getElementById("editPresentationDetailsBtn");
       if (editBtn) {
         editBtn.addEventListener("click", function () {
@@ -1176,12 +1527,13 @@ async function showThesisDetailsModal(thesisId) {
         });
       }
 
-      // Handle generate announcement (existing code)
+      // Generate Announcement button
       const generateBtn = document.getElementById("generateAnnouncementBtn");
       if (generateBtn) {
         const container = document.getElementById("announcementTextContainer");
         const textarea = document.getElementById("announcementText");
         generateBtn.onclick = async function () {
+          if (generateBtn.disabled) return;
           generateBtn.disabled = true;
           generateBtn.textContent = "Generating...";
           try {
@@ -1205,6 +1557,19 @@ async function showThesisDetailsModal(thesisId) {
           generateBtn.textContent = "Generate Announcement Text";
         };
       }
+    }
+
+    // --- Grading UI setup ---
+    if (t.status === "Under Examination") {
+      await setupGradingInterface(thesisId);
+    }
+
+    // Notes section event and load (Active only)
+    if (t.status === "Active") {
+      document
+        .getElementById("modalThesisNoteForm")
+        .addEventListener("submit", handleNoteSubmit);
+      loadModalThesisNotes(thesisId);
     }
 
     // Add event listener for cancel button if present
@@ -1376,6 +1741,11 @@ function checkSessionValidity() {
       // Check if user has the right role for this page
       const currentPath = window.location.pathname;
       const userRole = data.userRole;
+
+      // Set window.currentUserId for grading UI
+      if (typeof data.userId !== "undefined") {
+        window.currentUserId = data.userId;
+      }
 
       // Check if user is accessing the correct dashboard for their role
       if (currentPath.startsWith("/student/") && userRole !== "student") {
@@ -1726,6 +2096,15 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
+
+  // Set window.currentUserId on page load for grading UI
+  fetch("/auth/check-auth")
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.isLoggedIn && typeof data.userId !== "undefined") {
+        window.currentUserId = data.userId;
+      }
+    });
 
   // Common elements across all pages
   const logoutButtons = document.querySelectorAll(".logout-button");

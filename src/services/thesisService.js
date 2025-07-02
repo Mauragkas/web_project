@@ -12,6 +12,12 @@ const {
   getThesisNotesForInstructor,
   getPublicPresentationAnnouncements,
   getThesisPresentationDetailsForAnnouncement,
+  getThesisGrades,
+  upsertGrade,
+  countSubmittedGrades,
+  countExpectedGraders,
+  activateThesisGrading,
+  isGradingActive,
 } = require("../db/database");
 
 // Helper: parse grade to number (if needed)
@@ -542,6 +548,132 @@ class ThesisService {
       return thesis.draft_path;
     } catch (error) {
       console.error("Error getting thesis draft path:", error);
+      throw error;
+    }
+  }
+
+  async getAllGradesForThesis(thesisId) {
+    try {
+      return await getThesisGrades(thesisId);
+    } catch (error) {
+      console.error("Error getting thesis grades:", error);
+      throw error;
+    }
+  }
+
+  async saveInstructorGrade(instructorId, thesisId, gradeData) {
+    try {
+      const { gradeValue, criteria, comments } = gradeData;
+
+      // Validate grade value
+      if (gradeValue < 0 || gradeValue > 10) {
+        throw new Error("Grade must be between 0 and 10");
+      }
+
+      // Check if grading is active
+      const gradingStatus = await isGradingActive(thesisId);
+      if (!gradingStatus || !gradingStatus.grading_active) {
+        throw new Error("Grading is not active for this thesis");
+      }
+
+      // Save the grade
+      const criteriaJson = criteria ? JSON.stringify(criteria) : null;
+      await upsertGrade(
+        thesisId,
+        instructorId,
+        gradeValue,
+        criteriaJson,
+        comments,
+      );
+
+      // Check if all required graders have submitted
+      const submittedCount = await countSubmittedGrades(thesisId);
+      const expectedCount = await countExpectedGraders(thesisId);
+
+      let allGradesSubmitted = false;
+      if (submittedCount.count >= expectedCount.count) {
+        // All grades submitted, update thesis status
+        await executeRun(`UPDATE theses SET status = 'Graded' WHERE id = ?`, [
+          thesisId,
+        ]);
+        allGradesSubmitted = true;
+      }
+
+      return {
+        success: true,
+        allGradesSubmitted,
+        submittedCount: submittedCount.count,
+        expectedCount: expectedCount.count,
+      };
+    } catch (error) {
+      console.error("Error saving instructor grade:", error);
+      throw error;
+    }
+  }
+
+  async setThesisGradingStatus(thesisId, supervisorId, active = true) {
+    try {
+      const result = await activateThesisGrading(thesisId, supervisorId);
+      if (result.changes === 0) {
+        throw new Error(
+          "Failed to activate grading. Only the supervisor can activate grading.",
+        );
+      }
+      return { success: true };
+    } catch (error) {
+      console.error("Error setting grading status:", error);
+      throw error;
+    }
+  }
+
+  async checkGradingAccess(instructorId, thesisId) {
+    try {
+      // Check if instructor is supervisor or committee member
+      const query = `
+          SELECT
+            t.id,
+            t.status,
+            t.grading_active,
+            CASE
+              WHEN t.supervisor_id = ? THEN 'supervisor'
+              WHEN cm.instructor_id = ? THEN 'committee'
+              ELSE NULL
+            END as instructor_role
+          FROM theses t
+          LEFT JOIN committee_members cm ON cm.thesis_id = t.id AND cm.instructor_id = ? AND cm.status = 'Accepted'
+          WHERE t.id = ?
+        `;
+
+      const access = await getOne(query, [
+        instructorId,
+        instructorId,
+        instructorId,
+        thesisId,
+      ]);
+
+      if (!access || !access.instructor_role) {
+        return { hasAccess: false, reason: "Not authorized for this thesis" };
+      }
+
+      if (access.status !== "Under Examination") {
+        return { hasAccess: false, reason: "Thesis is not under examination" };
+      }
+
+      if (!access.grading_active) {
+        return {
+          hasAccess: false,
+          reason: "Grading not activated",
+          canActivate: access.instructor_role === "supervisor",
+        };
+      }
+
+      return {
+        hasAccess: true,
+        role: access.instructor_role,
+        canActivate: access.instructor_role === "supervisor",
+      };
+    } catch (error) {
+      console.error("Error checking grading access:", error);
       throw error;
     }
   }

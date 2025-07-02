@@ -500,6 +500,79 @@ class InstructorService {
 
     return !!thesis;
   }
+
+  async activateThesisGrading(instructorId, thesisId) {
+    try {
+      return await require("./thesisService").setThesisGradingStatus(
+        thesisId,
+        instructorId,
+        true,
+      );
+    } catch (error) {
+      console.error("Error activating thesis grading:", error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  async retrieveAllThesisGrades(thesisId, instructorId) {
+    try {
+      // Check access first
+      const accessCheck = await require("./thesisService").checkGradingAccess(
+        instructorId,
+        thesisId,
+      );
+      if (!accessCheck.hasAccess) {
+        return {
+          success: false,
+          message: accessCheck.reason,
+          canActivate: accessCheck.canActivate || false,
+          grades: [],
+          userRole: accessCheck.role || null,
+        };
+      }
+
+      const grades =
+        await require("./thesisService").getAllGradesForThesis(thesisId);
+      return {
+        success: true,
+        grades,
+        userRole: accessCheck.role,
+        canActivate: accessCheck.canActivate,
+      };
+    } catch (error) {
+      console.error("Error retrieving thesis grades:", error);
+      throw error;
+    }
+  }
+
+  async recordMyThesisGrade(instructorId, thesisId, gradeData) {
+    try {
+      // Check access
+      const accessCheck = await require("./thesisService").checkGradingAccess(
+        instructorId,
+        thesisId,
+      );
+      if (!accessCheck.hasAccess) {
+        return { success: false, message: accessCheck.reason };
+      }
+
+      const result = await require("./thesisService").saveInstructorGrade(
+        instructorId,
+        thesisId,
+        gradeData,
+      );
+      return {
+        success: true,
+        message: "Grade submitted successfully",
+        allGradesSubmitted: result.allGradesSubmitted,
+        submittedCount: result.submittedCount,
+        expectedCount: result.expectedCount,
+      };
+    } catch (error) {
+      console.error("Error recording thesis grade:", error);
+      return { success: false, message: error.message };
+    }
+  }
 }
 
 module.exports = new InstructorService();
