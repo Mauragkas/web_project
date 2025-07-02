@@ -1,4 +1,4 @@
-const { executeQuery, getOne } = require("../db/database");
+const { executeQuery, executeRun, getOne } = require("../db/database");
 const thesisService = require("./thesisService");
 
 class StudentService {
