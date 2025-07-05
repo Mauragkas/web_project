@@ -1,6 +1,7 @@
-test*
+test.*
 node_modules/*
 *.bk
 modules
 sessions.sqlite
 export.json
+venv/*
