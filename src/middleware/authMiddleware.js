@@ -9,8 +9,12 @@ function authMiddleware(requiredRole) {
   return (req, res, next) => {
     // Check if user is logged in
     if (!req.session || !req.session.userId) {
-      // If it's an AJAX request, return a JSON response
-      if (req.xhr || req.headers.accept.indexOf("json") > -1) {
+      // If it's an AJAX request, API route, or JSON request, return a JSON response
+      if (
+        req.xhr ||
+        req.headers.accept.indexOf("json") > -1 ||
+        req.path.startsWith("/api/")
+      ) {
         return res.status(401).json({
           success: false,
           message: "Authentication required",
@@ -36,8 +40,12 @@ function authMiddleware(requiredRole) {
       : userRole === requiredRole;
 
     if (!hasRequiredRole) {
-      // For AJAX requests, return JSON
-      if (req.xhr || req.headers.accept.indexOf("json") > -1) {
+      // For AJAX requests, API routes, or JSON requests, return JSON
+      if (
+        req.xhr ||
+        req.headers.accept.indexOf("json") > -1 ||
+        req.path.startsWith("/api/")
+      ) {
         return res.status(403).json({
           success: false,
           message: "Access denied",
