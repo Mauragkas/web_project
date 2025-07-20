@@ -92,4 +92,10 @@ router.post(
   studentController.recordRepositoryLink,
 );
 
+router.get(
+  "/api/student/thesis/:thesisId/completed-details",
+  authMiddleware("student"),
+  studentController.getCompletedThesisDetails,
+);
+
 module.exports = router;

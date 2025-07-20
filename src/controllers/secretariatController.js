@@ -164,7 +164,8 @@ class SecretariatController {
       if (result.success) {
         return res.json({
           success: true,
-          message: result.message,
+          message: `Thesis marked as completed. Average grade: ${result.avgGrade ?? "N/A"}`,
+          avgGrade: result.avgGrade,
         });
       } else {
         return res.status(400).json({
@@ -173,11 +174,9 @@ class SecretariatController {
         });
       }
     } catch (error) {
-      console.error("Error completing thesis:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Server error completing thesis",
-      });
+      return res
+        .status(500)
+        .json({ success: false, message: "Server error completing thesis" });
     }
   }
 }

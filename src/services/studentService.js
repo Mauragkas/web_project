@@ -443,6 +443,55 @@ class StudentService {
       };
     }
   }
+
+  async retrieveCompletedThesisInfo(studentId, thesisId) {
+    // Get thesis details (ensure status is Completed and belongs to student)
+    const details = await getOne(
+      `
+          SELECT
+              t.*,
+              tt.title as topic_title,
+              tt.description as topic_description,
+              tt.document_path as topic_document_path,
+              s.full_name as student_name,
+              s.email as student_email,
+              i.full_name as supervisor_name,
+              i.email as supervisor_email,
+              GROUP_CONCAT(cm2.full_name, ', ') as committee_members
+          FROM theses t
+          JOIN thesis_topics tt ON t.topic_id = tt.id
+          JOIN users s ON t.student_id = s.id
+          JOIN users i ON t.supervisor_id = i.id
+          LEFT JOIN committee_members cm ON cm.thesis_id = t.id
+          LEFT JOIN users cm2 ON cm2.id = cm.instructor_id
+          WHERE t.id = ? AND t.student_id = ? AND t.status = 'Completed'
+          GROUP BY t.id
+          LIMIT 1
+      `,
+      [thesisId, studentId],
+    );
+    if (!details) return null;
+
+    // Get status history
+    const statusHistory = await executeQuery(
+      `SELECT * FROM thesis_status_history WHERE thesis_id = ? ORDER BY changed_at ASC`,
+      [thesisId],
+    );
+
+    // Get grades
+    const grades = await executeQuery(
+      `SELECT g.*, u.full_name as instructor_name,
+                  CASE WHEN t.supervisor_id = g.instructor_id THEN 'Supervisor' ELSE 'Committee Member' END as instructor_role
+           FROM grades g
+           JOIN users u ON g.instructor_id = u.id
+           JOIN theses t ON g.thesis_id = t.id
+           WHERE g.thesis_id = ?
+           ORDER BY instructor_role DESC, g.created_at ASC`,
+      [thesisId],
+    );
+
+    return { details, statusHistory, grades };
+  }
 }
 
 module.exports = new StudentService();

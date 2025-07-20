@@ -342,12 +342,10 @@ class StudentController {
         typeof nemertisLink !== "string" ||
         !nemertisLink.startsWith("http")
       ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "A valid Nemertis link is required.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "A valid Nemertis link is required.",
+        });
       }
 
       // Call service
@@ -363,16 +361,45 @@ class StudentController {
           message: "Repository link recorded.",
         });
       } else {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: result.message || "Failed to record link.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: result.message || "Failed to record link.",
+        });
       }
     } catch (error) {
       console.error("Error recording repository link:", error);
       return res.status(500).json({ success: false, message: "Server error." });
+    }
+  }
+
+  async getCompletedThesisDetails(req, res) {
+    try {
+      const studentId = req.session.userId;
+      const thesisId = req.params.thesisId;
+
+      // Verify thesis belongs to student and is completed
+      const thesis = await studentService.retrieveCompletedThesisInfo(
+        studentId,
+        thesisId,
+      );
+      if (!thesis) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message: "Thesis not found or not completed.",
+          });
+      }
+
+      return res.json({
+        success: true,
+        thesis: thesis.details,
+        statusHistory: thesis.statusHistory,
+        grades: thesis.grades,
+      });
+    } catch (error) {
+      console.error("Error fetching completed thesis details:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
     }
   }
 }

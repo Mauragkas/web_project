@@ -2,7 +2,11 @@ const thesisService = require("./thesisService");
 
 class SecretariatService {
   async retrieveActiveAndUnderExaminationTheses() {
-    return thesisService.getThesesByStatuses(["Active", "Under Examination"]);
+    return thesisService.getThesesByStatuses([
+      "Active",
+      "Under Examination",
+      "Graded",
+    ]);
   }
 
   async retrieveThesisDetails(thesisId) {
@@ -173,23 +177,14 @@ class SecretariatService {
 
   async finalizeThesisCompletion(thesisId) {
     try {
-      // Double-check readiness before completion
-      const readiness = await this.checkThesisCompletionReadiness(thesisId);
-      if (!readiness.isReady) {
-        return {
-          success: false,
-          message: `Cannot complete thesis: ${readiness.reason}`,
-        };
-      }
-
-      await require("./thesisService").markThesisAsCompleted(thesisId);
-
+      const result =
+        await require("./thesisService").markThesisAsCompleted(thesisId);
       return {
         success: true,
         message: "Thesis marked as completed successfully",
+        avgGrade: result.avgGrade,
       };
     } catch (error) {
-      console.error("Error finalizing thesis completion:", error);
       return {
         success: false,
         message: error.message || "Failed to complete thesis",

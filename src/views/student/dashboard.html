@@ -273,31 +273,6 @@
                                     class="mt-2 text-sm font-medium hidden"
                                 ></div>
                             </div>
-                            <!-- <div class="mt-2">
-                                <input
-                                    type="text"
-                                    placeholder="Search instructor by ID or name"
-                                    class="border border-gray-300 p-2 rounded-md mr-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                />
-                                <button
-                                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
-                                >
-                                    Add to Committee
-                                </button>
-                                <div class="mt-4 border-t pt-4">
-                                    <h4 class="text-lg font-medium mb-2">
-                                        Invited Committee Members
-                                    </h4>
-                                    <div
-                                        class="bg-white bg-opacity-60 p-3 rounded-md mb-2"
-                                    >
-                                        <p class="text-sm text-gray-700">
-                                            [Instructor Name] - [Status, e.g.,
-                                            Invited, Accepted, Rejected]
-                                        </p>
-                                    </div>
-                                </div>
-                            </div> -->
                         </div>
 
                         <div
@@ -542,6 +517,7 @@
                             </p>
                             <div class="mt-4">
                                 <button
+                                    id="view-completed-thesis-info-btn"
                                     class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 mr-2"
                                 >
                                     View Thesis Information
@@ -558,6 +534,30 @@
                 </section>
             </main>
         </div>
+
+        <div
+            id="completed-thesis-details-modal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+        >
+            <div
+                class="bg-white rounded-lg shadow-xl max-w-2xl w-full relative p-8"
+            >
+                <button
+                    id="closeCompletedThesisDetailsModal"
+                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl"
+                >
+                    &times;
+                </button>
+                <h2 class="text-2xl font-bold mb-4">
+                    Completed Thesis Details
+                </h2>
+                <div id="completed-thesis-details-content">
+                    <!-- Details will be injected here -->
+                    <div class="text-center text-gray-500">Loading...</div>
+                </div>
+            </div>
+        </div>
+
         <script>
             // Initialize the dashboard by showing only the first section and hiding others
             document.addEventListener("DOMContentLoaded", function () {
@@ -850,6 +850,114 @@
                 "DOMContentLoaded",
                 loadStudentThesisInfo,
             );
+
+            // View Thesis Information Button Handler (Completed Thesis)
+            document
+                .getElementById("view-completed-thesis-info-btn")
+                ?.addEventListener("click", async function () {
+                    const thesisId = window.studentThesisId;
+                    if (!thesisId) {
+                        alert("No thesis found.");
+                        return;
+                    }
+                    showCompletedThesisDetailsModal(thesisId);
+                });
+
+            document
+                .getElementById("closeCompletedThesisDetailsModal")
+                ?.addEventListener("click", function () {
+                    document
+                        .getElementById("completed-thesis-details-modal")
+                        .classList.add("hidden");
+                });
+
+            async function showCompletedThesisDetailsModal(thesisId) {
+                const modal = document.getElementById(
+                    "completed-thesis-details-modal",
+                );
+                const content = document.getElementById(
+                    "completed-thesis-details-content",
+                );
+                modal.classList.remove("hidden");
+                content.innerHTML =
+                    '<div class="text-center text-gray-500">Loading...</div>';
+
+                try {
+                    const res = await fetch(
+                        `/student/api/student/thesis/${thesisId}/completed-details`,
+                    );
+                    const data = await res.json();
+                    if (!data.success) {
+                        content.innerHTML = `<div class="text-red-500 text-center">${data.message || "Failed to load thesis details."}</div>`;
+                        return;
+                    }
+                    const t = data.thesis;
+                    const statusHistory = data.statusHistory || [];
+                    const grades = data.grades || [];
+
+                    // Build HTML
+                    let html = `
+                        <h3 class="text-xl font-semibold mb-2">${t.topic_title}</h3>
+                        <p><span class="font-semibold">Description:</span> ${t.topic_description || "-"}</p>
+                        <p><span class="font-semibold">Status:</span> ${t.status}</p>
+                        <p><span class="font-semibold">Student:</span> ${t.student_name} (${t.student_email || "-"})</p>
+                        <p><span class="font-semibold">Supervisor:</span> ${t.supervisor_name} (${t.supervisor_email || "-"})</p>
+                        <p><span class="font-semibold">Committee:</span> ${t.committee_members || "-"}</p>
+                        <p><span class="font-semibold">Assigned Date:</span> ${t.assigned_date ? new Date(t.assigned_date).toLocaleDateString() : "-"}</p>
+                        <p><span class="font-semibold">Completion Date:</span> ${t.completion_date ? new Date(t.completion_date).toLocaleDateString() : "-"}</p>
+                        <p><span class="font-semibold">Grade:</span> ${t.grade || "-"}</p>
+                        <p><span class="font-semibold">AP Number:</span> ${t.ap_number || "-"}</p>
+                        <p><span class="font-semibold">Library Link:</span> ${t.library_link ? `<a href="${t.library_link}" target="_blank" class="text-indigo-600 underline">Nemertis</a>` : "-"}</p>
+                        <hr class="my-4">
+                        <h4 class="text-lg font-medium mb-2">Status Changes</h4>
+                        <ul class="list-disc list-inside mb-4">
+                            ${statusHistory.map((s) => `<li>${s.old_status} → ${s.new_status} by ${s.changed_by} at ${new Date(s.changed_at).toLocaleString()}</li>`).join("")}
+                        </ul>
+                        <h4 class="text-lg font-medium mb-2">Examination Report</h4>
+                        <table class="w-full border mb-4">
+                            <thead>
+                                <tr>
+                                    <th>Instructor</th>
+                                    <th>Role</th>
+                                    <th>Grade</th>
+                                    <th>Criteria</th>
+                                    <th>Comments</th>
+                                    <th>Submitted At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${grades
+                                    .map(
+                                        (g) => `
+                                    <tr>
+                                        <td>${g.instructor_name}</td>
+                                        <td>${g.instructor_role}</td>
+                                        <td>${g.grade_value}/10</td>
+                                        <td>${g.criteria_json ? escapeHtml(g.criteria_json) : "-"}</td>
+                                        <td>${g.comments ? escapeHtml(g.comments) : "-"}</td>
+                                        <td>${g.created_at ? new Date(g.created_at).toLocaleString() : "-"}</td>
+                                    </tr>
+                                `,
+                                    )
+                                    .join("")}
+                            </tbody>
+                        </table>
+                    `;
+                    content.innerHTML = html;
+                } catch (err) {
+                    content.innerHTML = `<div class="text-red-500 text-center">Server error loading thesis details.</div>`;
+                }
+            }
+
+            function escapeHtml(str) {
+                if (!str) return "";
+                return String(str)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+            }
         </script>
     </body>
 </html>

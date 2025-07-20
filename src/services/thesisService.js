@@ -821,8 +821,11 @@ class ThesisService {
         return { isReady: false, reason: "Thesis not found" };
       }
 
-      if (readiness.status !== "Under Examination") {
-        return { isReady: false, reason: "Thesis is not under examination" };
+      if (!["Under Examination", "Graded"].includes(readiness.status)) {
+        return {
+          isReady: false,
+          reason: "Thesis is not under examination or graded",
+        };
       }
 
       const hasAllGrades = readiness.grade_count >= readiness.expected_graders;
@@ -854,23 +857,54 @@ class ThesisService {
 
   async markThesisAsCompleted(thesisId) {
     try {
-      // First verify readiness
-      const readiness = await this.verifyGradesAndNemertisLink(thesisId);
-      if (!readiness.isReady) {
-        throw new Error(readiness.reason);
-      }
-
-      const results =
-        await require("../db/database").markThesisAsCompleted(thesisId);
-      const updateResult = results[0];
-
-      if (updateResult.changes === 0) {
+      // Get thesis status
+      const thesis = await this.getThesisById(thesisId);
+      if (!thesis) throw new Error("Thesis not found");
+      if (!["Under Examination", "Graded"].includes(thesis.status)) {
         throw new Error(
-          "Failed to update thesis status. Thesis may not be in 'Under Examination' status.",
+          "Thesis must be Under Examination or Graded to complete",
         );
       }
 
-      return { success: true };
+      // Check readiness (grades & Nemertis link)
+      const readiness = await this.verifyGradesAndNemertisLink(thesisId);
+      if (!readiness.isReady) throw new Error(readiness.reason);
+
+      // Calculate average grade
+      const grades = await getThesisGrades(thesisId);
+      let avgGrade = null;
+      if (grades && grades.length > 0) {
+        avgGrade =
+          grades.reduce((sum, g) => sum + (g.grade_value || 0), 0) /
+          grades.length;
+        avgGrade = avgGrade.toFixed(2);
+      }
+
+      // Transaction: set status, completion date, grade, history
+      const operations = [
+        {
+          query: `
+            UPDATE theses
+            SET status = 'Completed', completion_date = CURRENT_TIMESTAMP, grade = ?
+            WHERE id = ? AND status IN ('Under Examination', 'Graded')
+          `,
+          params: [avgGrade, thesisId],
+        },
+        {
+          query: `
+            INSERT INTO thesis_status_history
+            (thesis_id, old_status, new_status, changed_by, changed_at)
+            VALUES (?, ?, 'Completed', 'Secretariat', CURRENT_TIMESTAMP)
+          `,
+          params: [thesisId, thesis.status],
+        },
+      ];
+      const results =
+        await require("../db/database").executeTransaction(operations);
+      if (results[0].changes === 0) {
+        throw new Error("Failed to update thesis status.");
+      }
+      return { success: true, avgGrade };
     } catch (error) {
       console.error("Error marking thesis as completed:", error);
       throw error;
