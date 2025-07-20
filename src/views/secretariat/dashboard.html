@@ -20,6 +20,35 @@
                         checkSessionValidity();
                     }
                 });
+
+                // Add logout button handler
+                document
+                    .querySelectorAll(".logout-button")
+                    .forEach(function (btn) {
+                        btn.addEventListener("click", async function (e) {
+                            e.preventDefault();
+                            try {
+                                const res = await fetch("/auth/logout", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                });
+                                const data = await res.json();
+                                if (data.success) {
+                                    window.location.href =
+                                        "/public/announcements";
+                                } else {
+                                    alert(
+                                        "Logout failed: " +
+                                            (data.message || "Unknown error"),
+                                    );
+                                }
+                            } catch (err) {
+                                alert("Server error during logout.");
+                            }
+                        });
+                    });
             });
 
             // Function to check if thesis is ready for completion
@@ -574,6 +603,35 @@
                         }
                     });
                 }
+
+                // Add logout button handler
+                document
+                    .querySelectorAll(".logout-button")
+                    .forEach(function (btn) {
+                        btn.addEventListener("click", async function (e) {
+                            e.preventDefault();
+                            try {
+                                const res = await fetch("/auth/logout", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                });
+                                const data = await res.json();
+                                if (data.success) {
+                                    window.location.href =
+                                        "/public/announcements";
+                                } else {
+                                    alert(
+                                        "Logout failed: " +
+                                            (data.message || "Unknown error"),
+                                    );
+                                }
+                            } catch (err) {
+                                alert("Server error during logout.");
+                            }
+                        });
+                    });
 
                 // Modal close logic
                 document
