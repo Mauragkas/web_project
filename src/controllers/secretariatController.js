@@ -127,6 +127,59 @@ class SecretariatController {
       });
     }
   }
+
+  async checkCompletionReadiness(req, res) {
+    try {
+      const thesisId = req.params.thesisId;
+      const readiness =
+        await secretariatService.checkThesisCompletionReadiness(thesisId);
+
+      return res.json({
+        success: true,
+        isReadyForCompletion: readiness.isReady,
+        reason: readiness.reason || null,
+        details: readiness.isReady
+          ? {
+              gradeCount: readiness.gradeCount,
+              expectedGraders: readiness.expectedGraders,
+              nemertisLink: readiness.nemertisLink,
+            }
+          : null,
+      });
+    } catch (error) {
+      console.error("Error checking completion readiness:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Server error checking completion readiness",
+      });
+    }
+  }
+
+  async completeThesis(req, res) {
+    try {
+      const thesisId = req.params.thesisId;
+      const result =
+        await secretariatService.finalizeThesisCompletion(thesisId);
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: result.message,
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: result.message,
+        });
+      }
+    } catch (error) {
+      console.error("Error completing thesis:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Server error completing thesis",
+      });
+    }
+  }
 }
 
 module.exports = new SecretariatController();

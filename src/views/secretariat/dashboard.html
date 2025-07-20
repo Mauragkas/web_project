@@ -22,6 +22,69 @@
                 });
             });
 
+            // Function to check if thesis is ready for completion
+            async function checkThesisCompletionReadiness(thesisId) {
+                try {
+                    const response = await fetch(
+                        `/secretariat/api/secretariat/thesis/${thesisId}/completion-check`,
+                    );
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.error(
+                        "Error checking thesis completion readiness:",
+                        error,
+                    );
+                    return { success: false, isReadyForCompletion: false };
+                }
+            }
+
+            // Function to complete thesis
+            async function completeThesis(thesisId, thesisTitle) {
+                if (
+                    !confirm(
+                        `Are you sure you want to mark "${thesisTitle}" as completed? This action cannot be undone.`,
+                    )
+                ) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(
+                        `/secretariat/api/secretariat/thesis/${thesisId}/complete`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                        },
+                    );
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert(data.message);
+                        // Refresh the theses list
+                        if (typeof loadSecretariatTheses === "function") {
+                            loadSecretariatTheses();
+                        }
+                        // Close thesis details modal if open
+                        const detailsModal =
+                            document.getElementById("thesisDetailsModal");
+                        if (detailsModal) {
+                            detailsModal.classList.add("hidden");
+                        }
+                    } else {
+                        alert(`Failed to complete thesis: ${data.message}`);
+                    }
+                } catch (error) {
+                    console.error("Error completing thesis:", error);
+                    alert(
+                        "Server error while completing thesis. Please try again.",
+                    );
+                }
+            }
+
             // --- Secretariat: Load Active and Under Examination Theses ---
             async function loadSecretariatTheses() {
                 const listDiv = document.getElementById(
@@ -244,7 +307,7 @@
                 content.innerHTML =
                     '<div class="text-center text-gray-500">Loading...</div>';
 
-                currentThesisIdForModal = thesisId; // Save for AP number recording
+                currentThesisIdForModal = thesisId;
 
                 try {
                     const res = await fetch(
@@ -256,6 +319,13 @@
                         return;
                     }
                     const t = data.thesis;
+
+                    // Check completion readiness if thesis is Under Examination
+                    let completionReadiness = null;
+                    if (t.status === "Under Examination") {
+                        completionReadiness =
+                            await checkThesisCompletionReadiness(thesisId);
+                    }
 
                     // Committee display
                     let committeeHtml = "-";
@@ -270,68 +340,122 @@
 
                     // Build the content HTML
                     let contentHtml = `
-                <div>
-                    <h3 class="text-xl font-semibold mb-2">${t.topic_title}</h3>
-                    <p><span class="font-semibold">Description:</span> ${t.topic_description || "-"}</p>
-                    <p><span class="font-semibold">Status:</span> ${t.status}</p>
-                    <p><span class="font-semibold">Student:</span> ${t.student_name} (${t.student_email || "-"})</p>
-                    <p><span class="font-semibold">Supervisor:</span> ${t.supervisor_name} (${t.supervisor_email || "-"})</p>
-                    <p><span class="font-semibold">Committee:</span><br>${committeeHtml}</p>
-                    <p><span class="font-semibold">Assigned Date:</span> ${t.assigned_date ? new Date(t.assigned_date).toLocaleDateString() : "-"}</p>
-                    <p><span class="font-semibold">Elapsed Time:</span> ${t.elapsedDays !== null ? `${t.elapsedDays} days (${t.elapsedYears} years)` : "-"}</p>
-                    <p><span class="font-semibold">Completion Date:</span> ${t.completion_date ? new Date(t.completion_date).toLocaleDateString() : "-"}</p>
-                    <p><span class="font-semibold">Grade:</span> ${t.grade || "-"}</p>
-                    <p><span class="font-semibold">AP Number:</span> <span id="ap-number-display">${t.ap_number || "-"}</span></p>
-                    <p><span class="font-semibold">Library Link:</span> ${t.library_link ? `<a href="${t.library_link}" target="_blank" class="text-indigo-600 underline">Nemertis</a>` : "-"}</p>
-            `;
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">${t.topic_title}</h3>
+                            <p><span class="font-semibold">Description:</span> ${t.topic_description || "-"}</p>
+                            <p><span class="font-semibold">Status:</span> ${t.status}</p>
+                            <p><span class="font-semibold">Student:</span> ${t.student_name} (${t.student_email || "-"})</p>
+                            <p><span class="font-semibold">Supervisor:</span> ${t.supervisor_name} (${t.supervisor_email || "-"})</p>
+                            <p><span class="font-semibold">Committee:</span><br>${committeeHtml}</p>
+                            <p><span class="font-semibold">Assigned Date:</span> ${t.assigned_date ? new Date(t.assigned_date).toLocaleDateString() : "-"}</p>
+                            <p><span class="font-semibold">Elapsed Time:</span> ${t.elapsedDays !== null ? `${t.elapsedDays} days (${t.elapsedYears} years)` : "-"}</p>
+                            <p><span class="font-semibold">Completion Date:</span> ${t.completion_date ? new Date(t.completion_date).toLocaleDateString() : "-"}</p>
+                            <p><span class="font-semibold">Grade:</span> ${t.grade || "-"}</p>
+                            <p><span class="font-semibold">AP Number:</span> <span id="ap-number-display">${t.ap_number || "-"}</span></p>
+                            <p><span class="font-semibold">Library Link:</span> ${t.library_link ? `<a href="${t.library_link}" target="_blank" class="text-indigo-600 underline">Nemertis</a>` : "-"}</p>
+                    `;
 
                     // Show cancellation details if thesis is cancelled
                     if (t.status === "Cancelled") {
                         contentHtml += `
-                        <div class="mt-4 p-4 bg-red-100 rounded-md">
-                          <h4 class="font-semibold text-lg mb-2 text-red-700">Cancellation Details</h4>
-                          <p><span class="font-semibold">Cancellation Date:</span> ${t.cancellation_date ? new Date(t.cancellation_date).toLocaleDateString() : "-"}</p>
-                          <p><span class="font-semibold">GA Number:</span> ${t.ga_number || "-"}</p>
-                          <p><span class="font-semibold">GA Year:</span> ${t.ga_year || "-"}</p>
-                          <p><span class="font-semibold">Cancellation Reason:</span> ${t.cancellation_reason || "-"}</p>
-                        </div>
+                            <div class="mt-4 p-4 bg-red-100 rounded-md">
+                              <h4 class="font-semibold text-lg mb-2 text-red-700">Cancellation Details</h4>
+                              <p><span class="font-semibold">Cancellation Date:</span> ${t.cancellation_date ? new Date(t.cancellation_date).toLocaleDateString() : "-"}</p>
+                              <p><span class="font-semibold">GA Number:</span> ${t.ga_number || "-"}</p>
+                              <p><span class="font-semibold">GA Year:</span> ${t.ga_year || "-"}</p>
+                              <p><span class="font-semibold">Cancellation Reason:</span> ${t.cancellation_reason || "-"}</p>
+                            </div>
                         `;
                     }
 
                     // AP Number section for "Active" status
                     if (t.status === "Active") {
                         contentHtml += `
-                    <div class="mt-6 pt-4 border-t">
-                        <h4 class="text-lg font-medium mb-4">Record AP Number</h4>
-                        <div class="mb-4">
-                            <label for="ap-number-input" class="block text-gray-700 font-semibold mb-2">
-                                AP Number (General Assembly)
-                            </label>
-                            <input
-                                type="text"
-                                id="ap-number-input"
-                                value="${t.ap_number || ""}"
-                                class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="Enter AP number"
-                            />
-                        </div>
-                        <button
-                            id="record-ap-btn"
-                            onclick="recordApNumber()"
-                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 mr-2"
-                        >
-                            Record AP Number
-                        </button>
-                        <button
-                            id="cancel-thesis-btn"
-                            onclick="showCancelThesisModal(${t.id}, '${t.topic_title.replace(/'/g, "\\'")}')"
-                            class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
-                        >
-                            Cancel Thesis Assignment
-                        </button>
-                        <div id="ap-message" class="mt-2 text-sm font-medium hidden"></div>
-                    </div>
-                `;
+                            <div class="mt-6 pt-4 border-t">
+                                <h4 class="text-lg font-medium mb-4">Record AP Number</h4>
+                                <div class="mb-4">
+                                    <label for="ap-number-input" class="block text-gray-700 font-semibold mb-2">
+                                        AP Number (General Assembly)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="ap-number-input"
+                                        value="${t.ap_number || ""}"
+                                        class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"
+                                        placeholder="Enter AP number"
+                                    />
+                                </div>
+                                <button
+                                    id="record-ap-btn"
+                                    onclick="recordApNumber()"
+                                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 mr-2"
+                                >
+                                    Record AP Number
+                                </button>
+                                <button
+                                    id="cancel-thesis-btn"
+                                    onclick="showCancelThesisModal(${t.id}, '${t.topic_title.replace(/'/g, "\\'")}')"
+                                    class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
+                                >
+                                    Cancel Thesis Assignment
+                                </button>
+                                <div id="ap-message" class="mt-2 text-sm font-medium hidden"></div>
+                            </div>
+                        `;
+                    }
+
+                    // Completion section for "Under Examination" status
+                    if (t.status === "Under Examination") {
+                        contentHtml += `
+                            <div class="mt-6 pt-4 border-t">
+                                <h4 class="text-lg font-medium mb-4">Thesis Completion</h4>
+                        `;
+
+                        if (
+                            completionReadiness &&
+                            completionReadiness.success
+                        ) {
+                            if (completionReadiness.isReadyForCompletion) {
+                                contentHtml += `
+                                    <div class="mb-4 p-4 bg-green-100 rounded-md">
+                                        <p class="text-green-800 font-medium">✓ Thesis is ready for completion</p>
+                                        <p class="text-sm text-green-700 mt-1">
+                                            All grades submitted (${completionReadiness.details.gradeCount}/${completionReadiness.details.expectedGraders})
+                                            and Nemertis link provided.
+                                        </p>
+                                    </div>
+                                    <button
+                                        id="complete-thesis-btn"
+                                        onclick="completeThesis(${t.id}, '${t.topic_title.replace(/'/g, "\\'")}')"
+                                        class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75"
+                                    >
+                                        Mark as Completed
+                                    </button>
+                                `;
+                            } else {
+                                contentHtml += `
+                                    <div class="mb-4 p-4 bg-yellow-100 rounded-md">
+                                        <p class="text-yellow-800 font-medium">⚠ Thesis not ready for completion</p>
+                                        <p class="text-sm text-yellow-700 mt-1">Reason: ${completionReadiness.reason}</p>
+                                    </div>
+                                    <button
+                                        class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg shadow-md cursor-not-allowed"
+                                        disabled
+                                        title="${completionReadiness.reason}"
+                                    >
+                                        Mark as Completed
+                                    </button>
+                                `;
+                            }
+                        } else {
+                            contentHtml += `
+                                <div class="mb-4 p-4 bg-red-100 rounded-md">
+                                    <p class="text-red-800 font-medium">✗ Error checking completion readiness</p>
+                                </div>
+                            `;
+                        }
+
+                        contentHtml += `</div>`;
                     }
 
                     contentHtml += `</div>`;

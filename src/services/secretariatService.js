@@ -159,6 +159,43 @@ class SecretariatService {
       return { success: false, message: "Failed to cancel thesis assignment" };
     }
   }
+
+  async checkThesisCompletionReadiness(thesisId) {
+    try {
+      return await require("./thesisService").verifyGradesAndNemertisLink(
+        thesisId,
+      );
+    } catch (error) {
+      console.error("Error checking thesis completion readiness:", error);
+      throw error;
+    }
+  }
+
+  async finalizeThesisCompletion(thesisId) {
+    try {
+      // Double-check readiness before completion
+      const readiness = await this.checkThesisCompletionReadiness(thesisId);
+      if (!readiness.isReady) {
+        return {
+          success: false,
+          message: `Cannot complete thesis: ${readiness.reason}`,
+        };
+      }
+
+      await require("./thesisService").markThesisAsCompleted(thesisId);
+
+      return {
+        success: true,
+        message: "Thesis marked as completed successfully",
+      };
+    } catch (error) {
+      console.error("Error finalizing thesis completion:", error);
+      return {
+        success: false,
+        message: error.message || "Failed to complete thesis",
+      };
+    }
+  }
 }
 
 module.exports = new SecretariatService();

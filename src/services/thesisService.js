@@ -809,6 +809,73 @@ class ThesisService {
       throw error;
     }
   }
+
+  async verifyGradesAndNemertisLink(thesisId) {
+    try {
+      const readiness =
+        await require("../db/database").checkThesisCompletionReadiness(
+          thesisId,
+        );
+
+      if (!readiness) {
+        return { isReady: false, reason: "Thesis not found" };
+      }
+
+      if (readiness.status !== "Under Examination") {
+        return { isReady: false, reason: "Thesis is not under examination" };
+      }
+
+      const hasAllGrades = readiness.grade_count >= readiness.expected_graders;
+      const hasNemertisLink =
+        readiness.library_link && readiness.library_link.trim().length > 0;
+
+      if (!hasAllGrades) {
+        return {
+          isReady: false,
+          reason: `Missing grades: ${readiness.grade_count}/${readiness.expected_graders} submitted`,
+        };
+      }
+
+      if (!hasNemertisLink) {
+        return { isReady: false, reason: "Nemertis link not provided" };
+      }
+
+      return {
+        isReady: true,
+        gradeCount: readiness.grade_count,
+        expectedGraders: readiness.expected_graders,
+        nemertisLink: readiness.library_link,
+      };
+    } catch (error) {
+      console.error("Error verifying thesis completion readiness:", error);
+      throw error;
+    }
+  }
+
+  async markThesisAsCompleted(thesisId) {
+    try {
+      // First verify readiness
+      const readiness = await this.verifyGradesAndNemertisLink(thesisId);
+      if (!readiness.isReady) {
+        throw new Error(readiness.reason);
+      }
+
+      const results =
+        await require("../db/database").markThesisAsCompleted(thesisId);
+      const updateResult = results[0];
+
+      if (updateResult.changes === 0) {
+        throw new Error(
+          "Failed to update thesis status. Thesis may not be in 'Under Examination' status.",
+        );
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error marking thesis as completed:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new ThesisService();

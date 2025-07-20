@@ -422,6 +422,45 @@ async function cancelThesisBySecretariat(
   return executeTransaction(operations);
 }
 
+function checkThesisCompletionReadiness(thesisId) {
+  const query = `
+    SELECT
+      t.id,
+      t.status,
+      t.library_link,
+      COUNT(DISTINCT g.instructor_id) as grade_count,
+      (SELECT COUNT(DISTINCT cm.instructor_id) FROM committee_members cm WHERE cm.thesis_id = t.id AND cm.status = 'Accepted') + 1 as expected_graders
+    FROM theses t
+    LEFT JOIN grades g ON g.thesis_id = t.id
+    LEFT JOIN committee_members cm ON cm.thesis_id = t.id AND cm.status = 'Accepted'
+    WHERE t.id = ?
+    GROUP BY t.id
+  `;
+  return getOne(query, [thesisId]);
+}
+
+function markThesisAsCompleted(thesisId) {
+  const operations = [
+    {
+      query: `
+        UPDATE theses
+        SET status = 'Completed', completion_date = CURRENT_TIMESTAMP
+        WHERE id = ? AND status = 'Under Examination'
+      `,
+      params: [thesisId],
+    },
+    {
+      query: `
+        INSERT INTO thesis_status_history
+        (thesis_id, old_status, new_status, changed_by, changed_at)
+        VALUES (?, 'Under Examination', 'Completed', 'Secretariat', CURRENT_TIMESTAMP)
+      `,
+      params: [thesisId],
+    },
+  ];
+  return executeTransaction(operations);
+}
+
 module.exports = {
   executeQuery,
   executeRun,
@@ -462,4 +501,6 @@ module.exports = {
   isGradingActive,
   updateThesisApNumber,
   cancelThesisBySecretariat,
+  checkThesisCompletionReadiness,
+  markThesisAsCompleted,
 };

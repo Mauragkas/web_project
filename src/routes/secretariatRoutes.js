@@ -48,4 +48,18 @@ router.post(
   secretariatController.cancelThesisAssignment,
 );
 
+// API endpoint to check if thesis is ready for completion
+router.get(
+  "/api/secretariat/thesis/:thesisId/completion-check",
+  authMiddleware("secretariat"),
+  secretariatController.checkCompletionReadiness,
+);
+
+// API endpoint to mark thesis as completed
+router.post(
+  "/api/secretariat/thesis/:thesisId/complete",
+  authMiddleware("secretariat"),
+  secretariatController.completeThesis,
+);
+
 module.exports = router;
