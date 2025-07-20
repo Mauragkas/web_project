@@ -46,31 +46,32 @@
                     listDiv.innerHTML = data.theses
                         .map(
                             (t) => `
-      <div class="bg-white bg-opacity-60 p-3 rounded-md mb-2 flex flex-col md:flex-row justify-between items-start md:items-center border-l-4 ${
-          t.status === "Active"
-              ? "border-indigo-500"
-              : t.status === "Under Examination"
-                ? "border-yellow-500"
-                : "border-gray-300"
-      }">
-        <div>
-          <p class="font-semibold">${t.topic_title}</p>
-          <p class="text-sm text-gray-500">Student: ${t.student_name} (${t.student_email || "-"})</p>
-          <p class="text-sm text-gray-500">Supervisor: ${t.supervisor_name} (${t.supervisor_email || "-"})</p>
-          <p class="text-sm text-gray-500">Status: ${t.status}</p>
-          <p class="text-xs text-gray-400">Assigned: ${t.assigned_date ? new Date(t.assigned_date).toLocaleDateString() : "-"}</p>
-          <p class="text-xs text-gray-400">Committee: ${t.committee_members || "-"}</p>
-        </div>
-        <div class="mt-2 md:mt-0 md:ml-4 flex-shrink-0">
-          <button
-            class="text-sm text-indigo-600 hover:underline mr-2 view-details-btn"
-            data-thesis-id="${t.id}"
-          >
-            View Details
-          </button>
-        </div>
-      </div>
-    `,
+                    <div class="bg-white bg-opacity-60 p-3 rounded-md mb-2 flex flex-col md:flex-row justify-between items-start md:items-center border-l-4 ${
+                        t.status === "Active"
+                            ? "border-indigo-500"
+                            : t.status === "Under Examination"
+                              ? "border-yellow-500"
+                              : "border-gray-300"
+                    }">
+                        <div>
+                            <p class="font-semibold">${t.topic_title}</p>
+                            <p class="text-sm text-gray-500">Student: ${t.student_name} (${t.student_email || "-"})</p>
+                            <p class="text-sm text-gray-500">Supervisor: ${t.supervisor_name} (${t.supervisor_email || "-"})</p>
+                            <p class="text-sm text-gray-500">Status: ${t.status}</p>
+                            <p class="text-xs text-gray-400">Assigned: ${t.assigned_date ? new Date(t.assigned_date).toLocaleDateString() : "-"}</p>
+                            <p class="text-xs text-gray-400">Committee: ${t.committee_members || "-"}</p>
+                        </div>
+                        <div class="mt-2 md:mt-0 md:ml-4 flex-shrink-0">
+                            <button
+                                class="text-sm text-indigo-600 hover:underline mr-2 view-details-btn"
+                                data-thesis-id="${t.id}"
+                                onclick="showSecretariatThesisDetailsModal(${t.id})"
+                            >
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                `,
                         )
                         .join("");
                 } catch (err) {
@@ -78,18 +79,178 @@
                 }
             }
 
-            // Call this when "View Theses" is selected
+            // Global variable to store current thesis ID for modal
+            let currentThesisIdForModal = null;
+
+            async function showSecretariatThesisDetailsModal(thesisId) {
+                const modal = document.getElementById("thesisDetailsModal");
+                const content = document.getElementById(
+                    "thesis-details-content",
+                );
+                modal.classList.remove("hidden");
+                content.innerHTML =
+                    '<div class="text-center text-gray-500">Loading...</div>';
+
+                currentThesisIdForModal = thesisId; // Save for AP number recording
+
+                try {
+                    const res = await fetch(
+                        `/secretariat/api/secretariat/thesis/${thesisId}/details`,
+                    );
+                    const data = await res.json();
+                    if (!data.success) {
+                        content.innerHTML = `<div class="text-red-500 text-center">${data.message || "Failed to load thesis details."}</div>`;
+                        return;
+                    }
+                    const t = data.thesis;
+
+                    // Committee display
+                    let committeeHtml = "-";
+                    if (t.committee && t.committee.length > 0) {
+                        committeeHtml = t.committee
+                            .map(
+                                (cm) =>
+                                    `${cm.full_name} (${cm.email || "-"}) <span class="text-xs text-gray-500">[${cm.status}]</span>`,
+                            )
+                            .join("<br>");
+                    }
+
+                    // Build the content HTML
+                    let contentHtml = `
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">${t.topic_title}</h3>
+                    <p><span class="font-semibold">Description:</span> ${t.topic_description || "-"}</p>
+                    <p><span class="font-semibold">Status:</span> ${t.status}</p>
+                    <p><span class="font-semibold">Student:</span> ${t.student_name} (${t.student_email || "-"})</p>
+                    <p><span class="font-semibold">Supervisor:</span> ${t.supervisor_name} (${t.supervisor_email || "-"})</p>
+                    <p><span class="font-semibold">Committee:</span><br>${committeeHtml}</p>
+                    <p><span class="font-semibold">Assigned Date:</span> ${t.assigned_date ? new Date(t.assigned_date).toLocaleDateString() : "-"}</p>
+                    <p><span class="font-semibold">Elapsed Time:</span> ${t.elapsedDays !== null ? `${t.elapsedDays} days (${t.elapsedYears} years)` : "-"}</p>
+                    <p><span class="font-semibold">Completion Date:</span> ${t.completion_date ? new Date(t.completion_date).toLocaleDateString() : "-"}</p>
+                    <p><span class="font-semibold">Grade:</span> ${t.grade || "-"}</p>
+                    <p><span class="font-semibold">AP Number:</span> <span id="ap-number-display">${t.ap_number || "-"}</span></p>
+                    <p><span class="font-semibold">Library Link:</span> ${t.library_link ? `<a href="${t.library_link}" target="_blank" class="text-indigo-600 underline">Nemertis</a>` : "-"}</p>
+            `;
+
+                    // AP Number section only for "Active" status
+                    if (t.status === "Active") {
+                        contentHtml += `
+                    <div class="mt-6 pt-4 border-t">
+                        <h4 class="text-lg font-medium mb-4">Record AP Number</h4>
+                        <div class="mb-4">
+                            <label for="ap-number-input" class="block text-gray-700 font-semibold mb-2">
+                                AP Number (General Assembly)
+                            </label>
+                            <input
+                                type="text"
+                                id="ap-number-input"
+                                value="${t.ap_number || ""}"
+                                class="border border-gray-300 p-2 rounded-md w-full focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="Enter AP number"
+                            />
+                        </div>
+                        <button
+                            id="record-ap-btn"
+                            onclick="recordApNumber()"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
+                        >
+                            Record AP Number
+                        </button>
+                        <div id="ap-message" class="mt-2 text-sm font-medium hidden"></div>
+                    </div>
+                `;
+                    }
+
+                    contentHtml += `</div>`;
+                    content.innerHTML = contentHtml;
+                } catch (err) {
+                    content.innerHTML = `<div class="text-red-500 text-center">Server error loading thesis details.</div>`;
+                }
+            }
+
+            // Function to handle AP number recording
+            async function recordApNumber() {
+                const thesisId = currentThesisIdForModal;
+                const apNumberInput =
+                    document.getElementById("ap-number-input");
+                const apNumber = apNumberInput.value.trim();
+                const messageDiv = document.getElementById("ap-message");
+                const button = document.getElementById("record-ap-btn");
+
+                // Clear previous messages
+                messageDiv.classList.add("hidden");
+                messageDiv.textContent = "";
+
+                if (!apNumber) {
+                    messageDiv.textContent = "Please enter an AP number.";
+                    messageDiv.classList.remove("hidden", "text-green-600");
+                    messageDiv.classList.add("text-red-600");
+                    return;
+                }
+
+                // Disable button during request
+                const originalText = button.textContent;
+                button.disabled = true;
+                button.textContent = "Recording...";
+
+                try {
+                    const res = await fetch(
+                        `/secretariat/api/secretariat/thesis/${thesisId}/record-ap-number`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ apNumber }),
+                        },
+                    );
+
+                    const data = await res.json();
+
+                    if (data.success) {
+                        messageDiv.textContent =
+                            "AP number recorded successfully.";
+                        messageDiv.classList.remove("hidden", "text-red-600");
+                        messageDiv.classList.add("text-green-600");
+
+                        // Update AP number display in UI
+                        const apNumberDisplay =
+                            document.getElementById("ap-number-display");
+                        if (apNumberDisplay) {
+                            apNumberDisplay.textContent = apNumber;
+                        }
+
+                        // Refresh the theses list
+                        loadSecretariatTheses();
+                    } else {
+                        messageDiv.textContent =
+                            data.message || "Failed to record AP number.";
+                        messageDiv.classList.remove("hidden", "text-green-600");
+                        messageDiv.classList.add("text-red-600");
+                    }
+                } catch (err) {
+                    console.error("Error recording AP number:", err);
+                    messageDiv.textContent = "Server error. Please try again.";
+                    messageDiv.classList.remove("hidden", "text-green-600");
+                    messageDiv.classList.add("text-red-600");
+                } finally {
+                    // Re-enable button
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            }
+
+            // Call this when the page loads
             document.addEventListener("DOMContentLoaded", function () {
-                // If on secretariat dashboard, load theses on page load or when "View Theses" is selected
+                // Load theses when page loads
                 if (window.location.pathname === "/secretariat/dashboard") {
                     loadSecretariatTheses();
 
-                    // Optionally, reload when the sidebar "View Theses" is clicked
+                    // Handle sidebar navigation
                     document.querySelectorAll("aside a").forEach((link) => {
                         if (link.innerText.trim() === "View Theses") {
                             link.addEventListener("click", function (e) {
                                 e.preventDefault();
-                                // Hide other sections, show the view-theses-section, then load
                                 document
                                     .querySelectorAll("main section")
                                     .forEach((section) =>
@@ -116,71 +277,8 @@
                         }
                     });
                 }
-            });
 
-            // Attach event listeners to "View Details" buttons (event delegation)
-            document.addEventListener("click", function (e) {
-                if (e.target.classList.contains("view-details-btn")) {
-                    const thesisId = e.target.getAttribute("data-thesis-id");
-                    showSecretariatThesisDetailsModal(thesisId);
-                }
-            });
-
-            async function showSecretariatThesisDetailsModal(thesisId) {
-                const modal = document.getElementById("thesisDetailsModal");
-                const content = document.getElementById(
-                    "thesis-details-content",
-                );
-                modal.classList.remove("hidden");
-                content.innerHTML =
-                    '<div class="text-center text-gray-500">Loading...</div>';
-
-                try {
-                    const res = await fetch(
-                        `/secretariat/api/secretariat/thesis/${thesisId}/details`,
-                    );
-                    const data = await res.json();
-                    if (!data.success) {
-                        content.innerHTML = `<div class="text-red-500 text-center">${data.message || "Failed to load thesis details."}</div>`;
-                        return;
-                    }
-                    const t = data.thesis;
-
-                    // Committee display
-                    let committeeHtml = "-";
-                    if (t.committee && t.committee.length > 0) {
-                        committeeHtml = t.committee
-                            .map(
-                                (cm) =>
-                                    `${cm.full_name} (${cm.email || "-"}) <span class="text-xs text-gray-500">[${cm.status}]</span>`,
-                            )
-                            .join("<br>");
-                    }
-
-                    // Render details
-                    content.innerHTML = `
-                  <div>
-                    <h3 class="text-xl font-semibold mb-2">${t.topic_title}</h3>
-                    <p><span class="font-semibold">Description:</span> ${t.topic_description || "-"}</p>
-                    <p><span class="font-semibold">Status:</span> ${t.status}</p>
-                    <p><span class="font-semibold">Student:</span> ${t.student_name} (${t.student_email || "-"})</p>
-                    <p><span class="font-semibold">Supervisor:</span> ${t.supervisor_name} (${t.supervisor_email || "-"})</p>
-                    <p><span class="font-semibold">Committee:</span><br>${committeeHtml}</p>
-                    <p><span class="font-semibold">Assigned Date:</span> ${t.assigned_date ? new Date(t.assigned_date).toLocaleDateString() : "-"}</p>
-                    <p><span class="font-semibold">Elapsed Time:</span> ${t.elapsedDays !== null ? `${t.elapsedDays} days (${t.elapsedYears} years)` : "-"}</p>
-                    <p><span class="font-semibold">Completion Date:</span> ${t.completion_date ? new Date(t.completion_date).toLocaleDateString() : "-"}</p>
-                    <p><span class="font-semibold">Grade:</span> ${t.grade || "-"}</p>
-                    <p><span class="font-semibold">AP Number:</span> ${t.ap_number || "-"}</p>
-                    <p><span class="font-semibold">Library Link:</span> ${t.library_link ? `<a href="${t.library_link}" target="_blank" class="text-indigo-600 underline">Nemertis</a>` : "-"}</p>
-                  </div>
-                `;
-                } catch (err) {
-                    content.innerHTML = `<div class="text-red-500 text-center">Server error loading thesis details.</div>`;
-                }
-            }
-
-            // Modal close logic
-            document.addEventListener("DOMContentLoaded", function () {
+                // Modal close logic
                 document
                     .getElementById("closeThesisDetailsModal")
                     ?.addEventListener("click", function () {
@@ -188,6 +286,7 @@
                             .getElementById("thesisDetailsModal")
                             .classList.add("hidden");
                     });
+
                 document
                     .getElementById("thesisDetailsModal")
                     ?.addEventListener("click", function (e) {
@@ -376,10 +475,15 @@
                                     />
                                 </div>
                                 <button
+                                    id="record-ap-number-btn"
                                     class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 mr-2"
                                 >
                                     Record AP Number
                                 </button>
+                                <div
+                                    id="ap-number-message"
+                                    class="mt-2 text-sm font-medium hidden"
+                                ></div>
                                 <button
                                     class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
                                 >

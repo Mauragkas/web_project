@@ -58,6 +58,35 @@ class SecretariatController {
         .json({ success: false, message: "Server error during import." });
     }
   }
+
+  async recordApNumber(req, res) {
+    try {
+      const thesisId = req.params.thesisId;
+      const { apNumber } = req.body;
+
+      if (!apNumber) {
+        return res
+          .status(400)
+          .json({ success: false, message: "AP number is required." });
+      }
+
+      const result = await secretariatService.saveGeneralAssemblyApNumber(
+        thesisId,
+        apNumber,
+      );
+
+      if (result.success) {
+        return res.json({ success: true, message: "AP number recorded." });
+      } else {
+        return res
+          .status(400)
+          .json({ success: false, message: result.message });
+      }
+    } catch (error) {
+      console.error("Record AP number error:", error);
+      return res.status(500).json({ success: false, message: "Server error." });
+    }
+  }
 }
 
 module.exports = new SecretariatController();

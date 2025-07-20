@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS theses (
     draft_path TEXT,
     external_links TEXT,
     grading_active BOOLEAN DEFAULT FALSE,
+    ap_number TEXT,
     FOREIGN KEY (topic_id) REFERENCES thesis_topics(id),
     FOREIGN KEY (student_id) REFERENCES users(id),
     FOREIGN KEY (supervisor_id) REFERENCES users(id)

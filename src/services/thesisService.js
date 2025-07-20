@@ -18,6 +18,7 @@ const {
   countExpectedGraders,
   activateThesisGrading,
   isGradingActive,
+  updateThesisApNumber,
 } = require("../db/database");
 
 // Helper: parse grade to number (if needed)
@@ -196,8 +197,14 @@ class ThesisService {
    * @returns {Promise<Array>}
    */
   async getThesesForInstructor(instructorId, filters = {}) {
-    let params = [instructorId, instructorId];
-    let whereClauses = ["(t.supervisor_id = ? OR cm.instructor_id = ?)"];
+    let params = [];
+    let whereClauses = [];
+
+    // Default: show theses where instructor is supervisor or accepted committee member
+    whereClauses.push(
+      "(t.supervisor_id = ? OR (cm.instructor_id = ? AND cm.status = 'Accepted'))",
+    );
+    params.push(instructorId, instructorId);
 
     if (filters.status) {
       whereClauses.push("t.status = ?");
@@ -212,7 +219,7 @@ class ThesisService {
         params.push(filters.status);
       }
     } else if (filters.role === "committee") {
-      whereClauses = ["cm.instructor_id = ?"];
+      whereClauses = ["cm.instructor_id = ? AND cm.status = 'Accepted'"];
       params = [instructorId];
       if (filters.status) {
         whereClauses.push("t.status = ?");
@@ -221,39 +228,39 @@ class ThesisService {
     }
 
     const query = `
-        SELECT
-          t.id as thesis_id,
-          t.topic_id,
-          t.student_id,
-          t.supervisor_id,
-          t.status,
-          t.assigned_date,
-          t.completion_date,
-          t.grade,
-          t.ap_number,
-          t.library_link,
-          tt.title as topic_title,
-          u.full_name as student_name,
-          s.full_name as supervisor_name,
-          GROUP_CONCAT(cm2.full_name, ', ') as committee_members,
-          CASE
-            WHEN t.supervisor_id = ? THEN 'supervisor'
-            WHEN cm.instructor_id = ? THEN 'committee'
-            ELSE NULL
-          END as instructor_role
-        FROM theses t
-        JOIN thesis_topics tt ON t.topic_id = tt.id
-        JOIN users u ON t.student_id = u.id
-        JOIN users s ON t.supervisor_id = s.id
-        LEFT JOIN committee_members cm ON cm.thesis_id = t.id
-        LEFT JOIN users cm2 ON cm2.id = cm.instructor_id
-        WHERE ${whereClauses.join(" AND ")}
-        GROUP BY t.id
-        ORDER BY t.assigned_date DESC
-      `;
+       SELECT
+         t.id as thesis_id,
+         t.topic_id,
+         t.student_id,
+         t.supervisor_id,
+         t.status,
+         t.assigned_date,
+         t.completion_date,
+         t.grade,
+         t.ap_number,
+         t.library_link,
+         tt.title as topic_title,
+         u.full_name as student_name,
+         s.full_name as supervisor_name,
+         GROUP_CONCAT(cm2.full_name, ', ') as committee_members,
+         CASE
+           WHEN t.supervisor_id = ? THEN 'supervisor'
+           WHEN cm.instructor_id = ? THEN 'committee'
+           ELSE NULL
+         END as instructor_role
+       FROM theses t
+       JOIN thesis_topics tt ON t.topic_id = tt.id
+       JOIN users u ON t.student_id = u.id
+       JOIN users s ON t.supervisor_id = s.id
+       LEFT JOIN committee_members cm ON cm.thesis_id = t.id AND cm.instructor_id = ? AND cm.status = 'Accepted'
+       LEFT JOIN users cm2 ON cm2.id = cm.instructor_id
+       WHERE ${whereClauses.join(" AND ")}
+       GROUP BY t.id
+       ORDER BY t.assigned_date DESC
+     `;
 
-    // For role-specific queries, instructor_id is used twice for CASE
-    const caseParams = [instructorId, instructorId];
+    // For CASE, instructor_id is used twice for supervisor/committee
+    const caseParams = [instructorId, instructorId, instructorId];
     return executeQuery(query, [...caseParams, ...params]);
   }
 
@@ -762,6 +769,16 @@ class ThesisService {
       elapsedDays,
       elapsedYears,
     };
+  }
+
+  async updateThesisApNumber(thesisId, apNumber) {
+    // Only allow update if thesis is Active
+    const result = await updateThesisApNumber(thesisId, apNumber);
+    if (result.changes > 0) {
+      return { success: true };
+    } else {
+      return { success: false, message: "Thesis not found or not Active" };
+    }
   }
 }
 

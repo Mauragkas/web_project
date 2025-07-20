@@ -375,6 +375,13 @@ function isGradingActive(thesisId) {
   return getOne(`SELECT grading_active FROM theses WHERE id = ?`, [thesisId]);
 }
 
+async function updateThesisApNumber(thesisId, apNumber) {
+  return executeRun(
+    `UPDATE theses SET ap_number = ? WHERE id = ? AND status = 'Active'`,
+    [apNumber, thesisId],
+  );
+}
+
 module.exports = {
   executeQuery,
   executeRun,
@@ -413,4 +420,5 @@ module.exports = {
   countExpectedGraders,
   activateThesisGrading,
   isGradingActive,
+  updateThesisApNumber,
 };

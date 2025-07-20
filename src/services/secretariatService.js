@@ -105,6 +105,14 @@ class SecretariatService {
       return { success: false, message: "Import failed: " + error.message };
     }
   }
+
+  async saveGeneralAssemblyApNumber(thesisId, apNumber) {
+    // Optionally validate apNumber format here
+    if (!apNumber || typeof apNumber !== "string" || apNumber.length < 3) {
+      return { success: false, message: "Invalid AP number" };
+    }
+    return thesisService.updateThesisApNumber(thesisId, apNumber);
+  }
 }
 
 module.exports = new SecretariatService();

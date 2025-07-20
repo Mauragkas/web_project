@@ -34,4 +34,11 @@ router.post(
   secretariatController.importUserData,
 );
 
+// API endpoint to record AP number
+router.post(
+  "/api/secretariat/thesis/:thesisId/record-ap-number",
+  authMiddleware("secretariat"),
+  secretariatController.recordApNumber,
+);
+
 module.exports = router;
