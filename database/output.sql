@@ -168,6 +168,8 @@ CREATE TABLE thesis_topics (
             FOREIGN KEY (instructor_id) REFERENCES users(id)
         );
 INSERT INTO thesis_topics VALUES(12,8,'asdfasdfzxcvdfg','adfhjmfdghjnfghn','/uploads/topics/1751472038315-document.pdf','Under Assignment','2025-07-02 16:00:38');
+INSERT INTO thesis_topics VALUES(20,8,'PDF Updated','PDF changed','/uploads/topics/1751754147983-document.pdf','Available','2025-07-05 22:22:27');
+INSERT INTO thesis_topics VALUES(22,105,'akomninos topic','none',NULL,'Under Assignment','2025-07-20 20:01:39');
 CREATE TABLE theses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             topic_id INTEGER NOT NULL,
@@ -194,6 +196,7 @@ INSERT INTO theses VALUES(8,9,7,8,'Cancelled','2021-06-20',NULL,NULL,NULL,NULL,N
 INSERT INTO theses VALUES(9,7,7,8,'Under Assignment','2025-07-02 15:36:01',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
 INSERT INTO theses VALUES(10,12,7,8,'Under Examination','2025-07-02 16:01:19',NULL,NULL,NULL,NULL,'2025-07-02','12:31','',NULL,NULL,NULL,NULL,'/uploads/thesis_drafts/thesis_unknown_1751478835542.pdf','',0,'online','https://asdfasdf.com');
 INSERT INTO theses VALUES(11,8,7,8,'Under Examination','2025-05-28',NULL,NULL,NULL,NULL,'2025-07-07','15:00','Conference Room B, Computer Science Department',NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
+INSERT INTO theses VALUES(12,22,104,105,'Active','2025-07-20 20:02:03',NULL,NULL,'asdfasdf',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
 CREATE TABLE committee_members (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             thesis_id INTEGER NOT NULL,
@@ -212,6 +215,8 @@ INSERT INTO committee_members VALUES(6,7,8,'Accepted','2025-06-18 14:12:58','202
 INSERT INTO committee_members VALUES(7,7,9,'Accepted','2025-06-18 14:12:58','2025-06-19 14:12:58');
 INSERT INTO committee_members VALUES(8,10,105,'Accepted','2025-07-02 16:13:12','2025-07-02 16:14:12');
 INSERT INTO committee_members VALUES(9,10,106,'Accepted','2025-07-02 16:13:12','2025-07-02 16:13:48');
+INSERT INTO committee_members VALUES(10,12,154,'Accepted','2025-07-20 20:02:47','2025-07-20 20:12:31');
+INSERT INTO committee_members VALUES(11,12,153,'Accepted','2025-07-20 20:02:47','2025-07-20 20:11:44');
 CREATE TABLE thesis_notes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     thesis_id INTEGER NOT NULL,
@@ -236,10 +241,23 @@ CREATE TABLE thesis_status_history (
 );
 INSERT INTO thesis_status_history VALUES(1,8,'Active','Cancelled','Instructor (8)','2025-06-27 14:53:20');
 INSERT INTO thesis_status_history VALUES(2,10,'Active','Under Examination','Instructor (8)','2025-07-02 16:15:10');
+CREATE TABLE grades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    thesis_id INTEGER NOT NULL,
+    instructor_id INTEGER NOT NULL,
+    grade_value REAL NOT NULL CHECK(grade_value >= 0 AND grade_value <= 10),
+    criteria_json TEXT, -- JSON string containing detailed criteria scores
+    comments TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (thesis_id) REFERENCES theses(id),
+    FOREIGN KEY (instructor_id) REFERENCES users(id),
+    UNIQUE(thesis_id, instructor_id)
+);
 INSERT INTO sqlite_sequence VALUES('users',154);
-INSERT INTO sqlite_sequence VALUES('thesis_topics',12);
-INSERT INTO sqlite_sequence VALUES('theses',11);
-INSERT INTO sqlite_sequence VALUES('committee_members',9);
+INSERT INTO sqlite_sequence VALUES('thesis_topics',22);
+INSERT INTO sqlite_sequence VALUES('theses',12);
+INSERT INTO sqlite_sequence VALUES('committee_members',11);
 INSERT INTO sqlite_sequence VALUES('thesis_notes',4);
 INSERT INTO sqlite_sequence VALUES('thesis_status_history',2);
 COMMIT;

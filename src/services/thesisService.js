@@ -780,6 +780,35 @@ class ThesisService {
       return { success: false, message: "Thesis not found or not Active" };
     }
   }
+
+  async cancelThesisBySecretariat(
+    thesisId,
+    gaNumber,
+    gaYear,
+    cancellationReason,
+  ) {
+    try {
+      const results = await require("../db/database").cancelThesisBySecretariat(
+        thesisId,
+        gaNumber,
+        gaYear,
+        cancellationReason,
+      );
+
+      const updateResult = results[0];
+
+      if (updateResult.changes === 0) {
+        throw new Error(
+          "Failed to cancel thesis. Please check if thesis is Active and exists.",
+        );
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error cancelling thesis by secretariat:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new ThesisService();

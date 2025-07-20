@@ -41,4 +41,11 @@ router.post(
   secretariatController.recordApNumber,
 );
 
+// API endpoint to cancel thesis assignment
+router.post(
+  "/api/secretariat/thesis/:thesisId/cancel-assignment",
+  authMiddleware("secretariat"),
+  secretariatController.cancelThesisAssignment,
+);
+
 module.exports = router;

@@ -113,6 +113,52 @@ class SecretariatService {
     }
     return thesisService.updateThesisApNumber(thesisId, apNumber);
   }
+
+  async cancelThesisAssignmentBySecretariat(
+    thesisId,
+    gaNumber,
+    gaYear,
+    reason,
+  ) {
+    try {
+      // Validate inputs
+      if (!gaNumber || !gaYear) {
+        return {
+          success: false,
+          message: "General Assembly Number and Year are required",
+        };
+      }
+
+      // Check if thesis exists and is Active
+      const thesis = await require("./thesisService").getThesisById(thesisId);
+      if (!thesis) {
+        return { success: false, message: "Thesis not found" };
+      }
+
+      if (thesis.status !== "Active") {
+        return {
+          success: false,
+          message: "Only Active theses can be cancelled",
+        };
+      }
+
+      // Cancel the thesis
+      const result = await require("./thesisService").cancelThesisBySecretariat(
+        thesisId,
+        gaNumber,
+        gaYear,
+        reason || "Cancelled by secretariat with General Assembly approval",
+      );
+
+      return {
+        success: true,
+        message: "Thesis assignment cancelled successfully",
+      };
+    } catch (error) {
+      console.error("Error cancelling thesis assignment:", error);
+      return { success: false, message: "Failed to cancel thesis assignment" };
+    }
+  }
 }
 
 module.exports = new SecretariatService();

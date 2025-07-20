@@ -382,6 +382,46 @@ async function updateThesisApNumber(thesisId, apNumber) {
   );
 }
 
+async function cancelThesisBySecretariat(
+  thesisId,
+  gaNumber,
+  gaYear,
+  cancellationReason,
+) {
+  const operations = [
+    {
+      query: `
+        UPDATE theses
+        SET status = 'Cancelled',
+            cancellation_reason = ?,
+            ga_number = ?,
+            ga_year = ?,
+            cancellation_date = CURRENT_TIMESTAMP
+        WHERE id = ? AND status = 'Active'
+      `,
+      params: [cancellationReason, gaNumber, gaYear, thesisId],
+    },
+    {
+      query: `
+        UPDATE thesis_topics
+        SET status = 'Available'
+        WHERE id = (SELECT topic_id FROM theses WHERE id = ?)
+      `,
+      params: [thesisId],
+    },
+    {
+      query: `
+        INSERT INTO thesis_status_history
+        (thesis_id, old_status, new_status, changed_by, changed_at)
+        VALUES (?, 'Active', 'Cancelled', 'Secretariat', CURRENT_TIMESTAMP)
+      `,
+      params: [thesisId],
+    },
+  ];
+
+  return executeTransaction(operations);
+}
+
 module.exports = {
   executeQuery,
   executeRun,
@@ -421,4 +461,5 @@ module.exports = {
   activateThesisGrading,
   isGradingActive,
   updateThesisApNumber,
+  cancelThesisBySecretariat,
 };

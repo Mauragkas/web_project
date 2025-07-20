@@ -87,6 +87,46 @@ class SecretariatController {
       return res.status(500).json({ success: false, message: "Server error." });
     }
   }
+
+  async cancelThesisAssignment(req, res) {
+    try {
+      const thesisId = req.params.thesisId;
+      const { gaNumber, gaYear, reason } = req.body;
+
+      if (!gaNumber || !gaYear) {
+        return res.status(400).json({
+          success: false,
+          message: "General Assembly Number and Year are required",
+        });
+      }
+
+      const result =
+        await secretariatService.cancelThesisAssignmentBySecretariat(
+          thesisId,
+          gaNumber,
+          gaYear,
+          reason,
+        );
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: result.message,
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: result.message,
+        });
+      }
+    } catch (error) {
+      console.error("Cancel thesis assignment error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Server error",
+      });
+    }
+  }
 }
 
 module.exports = new SecretariatController();
