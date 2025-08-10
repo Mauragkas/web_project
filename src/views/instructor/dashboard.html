@@ -8,7 +8,7 @@
         <title>Instructor Dashboard</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="stylesheet" href="/css/style.css" />
-        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script type="module" src="/js/main.js"></script>
     </head>
     <!-- <body class="animated-gradient text-gray-800"> -->
@@ -277,7 +277,7 @@
                         View graphical statistics about theses you are involved
                         in.
                     </p>
-                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div
                             class="bg-white bg-opacity-60 p-4 rounded-md shadow-sm"
                         >
@@ -298,12 +298,12 @@
                             <canvas id="gradeChart" height="120"></canvas>
                         </div>
                         <div
-                            class="bg-white bg-opacity-60 p-4 rounded-md col-span-1 md:col-span-2 shadow-sm"
+                            class="bg-white bg-opacity-60 p-4 rounded-md shadow-sm"
                         >
                             <h3 class="text-xl font-medium mb-2">
                                 Total Number of Theses
                             </h3>
-                            <canvas id="totalThesesChart" height="100"></canvas>
+                            <canvas id="totalThesesChart" height="120"></canvas>
                         </div>
                     </div>
                 </section>
