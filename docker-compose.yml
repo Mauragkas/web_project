@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  thesis-app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - SESSION_SECRET=changeme123
+      - BCRYPT_SALT_ROUNDS=10
+    volumes:
+      - ./database:/app/database
+      - ./public/uploads:/app/public/uploads
+    restart: unless-stopped
