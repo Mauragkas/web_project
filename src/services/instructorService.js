@@ -103,6 +103,15 @@ class InstructorService {
         };
       }
 
+      const existingThesis =
+        await thesisService.getActiveThesisByStudentId(studentId);
+      if (existingThesis) {
+        return {
+          success: false,
+          message: "This student already has an assigned thesis topic",
+        };
+      }
+
       // Verify the student exists and is a student
       const student = await studentService.getStudentById(studentId);
 
@@ -188,6 +197,7 @@ class InstructorService {
     const query = `
       SELECT
         t.id as thesis_id,
+        t.supervisor_id,
         t.status,
         t.assigned_date,
         t.completion_date,
@@ -195,6 +205,15 @@ class InstructorService {
         t.ap_number,
         t.library_link,
         t.draft_path,
+        t.cancellation_reason,
+        t.ga_number,
+        t.ga_year,
+        t.cancellation_date,
+        t.presentation_date,
+        t.presentation_time,
+        t.presentation_location,
+        t.presentation_location_type,
+        t.connection_link,
         tt.title as topic_title,
         tt.description as topic_description,
         tt.document_path as topic_document_path,
@@ -363,6 +382,7 @@ class InstructorService {
       instructorId,
     );
   }
+
   async generateThesisAnnouncement(instructorId, thesisId) {
     // Get all details
     const details =
@@ -377,25 +397,39 @@ class InstructorService {
     }
 
     // Format the announcement text
-    // You can adjust the template as needed
     const {
       thesis_title,
       student_name,
       presentation_date,
       presentation_time,
       presentation_location,
+      presentation_location_type,
+      connection_link,
       supervisor_name,
     } = details;
 
-    if (!presentation_date || !presentation_time || !presentation_location) {
+    if (
+      !presentation_date ||
+      !presentation_time ||
+      (presentation_location_type === "online"
+        ? !connection_link
+        : !presentation_location)
+    ) {
       throw new Error(
-        "Presentation details are incomplete. Please ensure date, time, and location are set.",
+        "Presentation details are incomplete. Please ensure date, time, and location/link are set.",
       );
     }
 
     // Format date/time for display
     const dateStr = new Date(presentation_date).toLocaleDateString();
     const timeStr = presentation_time;
+
+    let locationText = "";
+    if (presentation_location_type === "online") {
+      locationText = `Online (Link: ${connection_link})`;
+    } else {
+      locationText = presentation_location;
+    }
 
     const announcement = `Thesis Presentation Announcement
 
@@ -404,9 +438,9 @@ class InstructorService {
   Supervisor: ${supervisor_name}
   Date: ${dateStr}
   Time: ${timeStr}
-  Location: ${presentation_location}
+  Location: ${locationText}
 
-  We invite you to attend the thesis presentation of ${student_name} on "${thesis_title}", supervised by ${supervisor_name}, scheduled for ${dateStr} at ${timeStr} in ${presentation_location}.`;
+  We invite you to attend the thesis presentation of ${student_name} on "${thesis_title}", supervised by ${supervisor_name}, scheduled for ${dateStr} at ${timeStr} in ${locationText}.`;
 
     return announcement;
   }

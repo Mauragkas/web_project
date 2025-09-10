@@ -1,4 +1,6 @@
 const thesisService = require("./thesisService");
+const bcrypt = require("bcrypt");
+const { executeTransaction } = require("../db/database");
 
 class SecretariatService {
   async retrieveActiveAndUnderExaminationTheses() {

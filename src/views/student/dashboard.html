@@ -303,6 +303,10 @@
                                             class="border border-gray-300 p-2 rounded-md w-full"
                                             required
                                         />
+                                        <div
+                                            id="uploadedDraftFileInfo"
+                                            class="mt-2"
+                                        ></div>
                                     </div>
                                     <div>
                                         <label
@@ -698,33 +702,6 @@
                     }
                 });
 
-            // Pre-fill Edit Profile Form with Current Data
-            async function loadStudentProfile() {
-                try {
-                    const res = await fetch("/student/api/student/dashboard");
-                    const data = await res.json();
-                    if (data.success && data.thesis) {
-                        document.getElementById("street").value =
-                            data.thesis.street || "";
-                        document.getElementById("address_number").value =
-                            data.thesis.address_number || "";
-                        document.getElementById("city").value =
-                            data.thesis.city || "";
-                        document.getElementById("postcode").value =
-                            data.thesis.postcode || "";
-                        document.getElementById("email").value =
-                            data.thesis.email || "";
-                        document.getElementById("mobile_telephone").value =
-                            data.thesis.mobile_telephone || "";
-                        document.getElementById("landline_telephone").value =
-                            data.thesis.landline_telephone || "";
-                    }
-                } catch (err) {
-                    // Optionally handle error
-                }
-            }
-            document.addEventListener("DOMContentLoaded", loadStudentProfile);
-
             // View Examination Report Button Handler (Under Examination)
             document
                 .getElementById("view-exam-report-btn")
@@ -829,27 +806,27 @@
                     }
                 });
 
-            // Pre-fill library link input if exists after loading thesis info
-            async function loadStudentThesisInfo() {
-                try {
-                    const res = await fetch("/student/api/student/dashboard");
-                    const data = await res.json();
-                    if (data.success && data.thesis) {
-                        if (data.thesis.library_link) {
-                            const libInput =
-                                document.getElementById("library-link");
-                            if (libInput)
-                                libInput.value = data.thesis.library_link;
-                        }
-                    }
-                } catch (err) {
-                    // Optionally handle error
-                }
-            }
-            document.addEventListener(
-                "DOMContentLoaded",
-                loadStudentThesisInfo,
-            );
+            // // Pre-fill library link input if exists after loading thesis info
+            // async function loadStudentThesisInfo() {
+            //     try {
+            //         const res = await fetch("/student/api/student/dashboard");
+            //         const data = await res.json();
+            //         if (data.success && data.thesis) {
+            //             if (data.thesis.library_link) {
+            //                 const libInput =
+            //                     document.getElementById("library-link");
+            //                 if (libInput)
+            //                     libInput.value = data.thesis.library_link;
+            //             }
+            //         }
+            //     } catch (err) {
+            //         // Optionally handle error
+            //     }
+            // }
+            // document.addEventListener(
+            //     "DOMContentLoaded",
+            //     loadStudentThesisInfo,
+            // );
 
             // View Thesis Information Button Handler (Completed Thesis)
             document

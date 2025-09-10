@@ -5,3 +5,4 @@ modules
 sessions.sqlite
 export.json
 venv/*
+seq_diagram

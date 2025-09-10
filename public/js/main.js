@@ -207,7 +207,7 @@ async function showManageThesisActions() {
     if (status === "Under Assignment") {
       const ua = document.getElementById("under-assignment-actions");
       if (ua) ua.classList.remove("hidden");
-    } else if (status === "Under Examination") {
+    } else if (status === "Under Examination" || status === "Graded") {
       const ue = document.getElementById("under-examination-actions");
       if (ue) ue.classList.remove("hidden");
       // Pre-fill thesisId for upload form if present
@@ -1454,86 +1454,44 @@ async function showThesisDetailsModal(thesisId) {
     ) {
       html += `
         <div class="mt-6 pt-4 border-t">
-          <h4 class="text-lg font-medium mb-2">Presentation Management</h4>
-          ${
-            !t.presentation_date ||
-            !t.presentation_time ||
-            !t.presentation_location
-              ? `
-              <div id="presentation-details-form" class="mb-4">
-                <h5 class="font-medium mb-3">Set Presentation Details</h5>
-                <form id="setPresentationDetailsForm" class="space-y-4">
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label for="presentationDate" class="block text-sm font-medium text-gray-700 mb-1">
-                        Presentation Date <span class="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        id="presentationDate"
-                        name="presentationDate"
-                        value="${t.presentation_date || ""}"
-                        required
-                        class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label for="presentationTime" class="block text-sm font-medium text-gray-700 mb-1">
-                        Presentation Time <span class="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="time"
-                        id="presentationTime"
-                        name="presentationTime"
-                        value="${t.presentation_time || ""}"
-                        required
-                        class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label for="presentationLocation" class="block text-sm font-medium text-gray-700 mb-1">
-                      Presentation Location <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="presentationLocation"
-                      name="presentationLocation"
-                      value="${t.presentation_location || ""}"
-                      placeholder="e.g., Room A102, Engineering Building"
-                      required
-                      class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                  <div id="presentationDetailsMessage" class="text-sm hidden"></div>
-                  <button
-                    type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200"
-                  >
-                    Set Presentation Details
-                  </button>
-                </form>
-              </div>
-              `
-              : `
-              <div class="mb-4 p-4 bg-blue-50 rounded-md">
-                <h5 class="font-medium mb-2">Current Presentation Details</h5>
-                <p><strong>Date:</strong> ${new Date(t.presentation_date).toLocaleDateString()}</p>
-                <p><strong>Time:</strong> ${t.presentation_time}</p>
-                <p><strong>Location:</strong> ${t.presentation_location}</p>
-                <button
-                  id="editPresentationDetailsBtn"
-                  class="mt-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded text-sm"
-                >
-                  Edit Details
-                </button>
-              </div>
-              `
-          }
+          <h4 class="text-lg font-medium mb-2">Presentation Details</h4>
+          <div class="mb-4 p-4 bg-blue-50 rounded-md">
+              <h5 class="font-medium mb-2">Scheduled Presentation</h5>
+              <p><strong>Date:</strong> ${t.presentation_date ? new Date(t.presentation_date).toLocaleDateString() : "-"}</p>
+              <p><strong>Time:</strong> ${t.presentation_time || "-"}</p>
+              <p><strong>${t.presentation_location_type === "online" ? "Connection Link" : "Location"}:</strong>
+                ${
+                  t.presentation_location_type === "online"
+                    ? t.connection_link
+                      ? `<a href="${t.connection_link}" target="_blank">${t.connection_link}</a>`
+                      : "-"
+                    : t.presentation_location || "-"
+                }
+              </p>
+            </div>
           <button
             id="generateAnnouncementBtn"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 mb-4"
-            ${!t.presentation_date || !t.presentation_time || !t.presentation_location ? "disabled title='Set all presentation details first'" : ""}
+            class="
+              font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 mb-4
+              ${
+                !t.presentation_date ||
+                !t.presentation_time ||
+                (t.presentation_location_type === "online"
+                  ? !t.connection_link
+                  : !t.presentation_location)
+                  ? "bg-gray-400 text-white cursor-not-allowed opacity-60"
+                  : "bg-indigo-600 hover:bg-indigo-700 text-white"
+              }
+            "
+            ${
+              !t.presentation_date ||
+              !t.presentation_time ||
+              (t.presentation_location_type === "online"
+                ? !t.connection_link
+                : !t.presentation_location)
+                ? "disabled title='Set all presentation details first'"
+                : ""
+            }
           >
             Generate Announcement Text
           </button>
@@ -1966,6 +1924,23 @@ async function loadStudentThesisInfo() {
     }
 
     const thesis = data.thesis;
+
+    // Pre-fill externalLinks textarea
+    const externalLinksTextarea = document.getElementById("externalLinks");
+    if (externalLinksTextarea) {
+      externalLinksTextarea.value = thesis.external_links || "";
+    }
+
+    // Show uploaded draft file (if any)
+    const draftFileDiv = document.getElementById("uploadedDraftFileInfo");
+    if (draftFileDiv) {
+      if (thesis.draft_path) {
+        draftFileDiv.innerHTML = `<a href="${thesis.draft_path}" target="_blank" class="text-indigo-600 underline">View Uploaded Draft (PDF)</a>`;
+      } else {
+        draftFileDiv.innerHTML = `<span class="text-gray-500">No draft uploaded yet.</span>`;
+      }
+    }
+
     detailsDiv.innerHTML = `
       <p><span class="font-semibold">Topic:</span> ${thesis.topic_title || "-"}</p>
       <p><span class="font-semibold">Description:</span> ${thesis.topic_description || "-"}</p>

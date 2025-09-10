@@ -231,6 +231,9 @@ class StudentController {
       const thesisId = req.params.thesisId;
       const presentationData = req.body;
 
+      // Step 1: Add Logging
+      console.log("Presentation details received:", presentationData);
+
       // Validate required fields
       const {
         presentationDate,
@@ -280,6 +283,19 @@ class StudentController {
             "Presentation details can only be recorded for theses under examination",
         });
       }
+
+      // Step 1: Add Logging before DB update
+      const finalLocation = location;
+      const finalConnectionLink = connectionLink;
+      console.log("Updating thesis with:", {
+        presentationDate,
+        presentationTime,
+        finalLocation,
+        examinationMethod,
+        finalConnectionLink,
+        thesisId,
+        studentId,
+      });
 
       const result = await studentService.savePresentationDetails(
         studentId,
@@ -383,12 +399,10 @@ class StudentController {
         thesisId,
       );
       if (!thesis) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            message: "Thesis not found or not completed.",
-          });
+        return res.status(404).json({
+          success: false,
+          message: "Thesis not found or not completed.",
+        });
       }
 
       return res.json({

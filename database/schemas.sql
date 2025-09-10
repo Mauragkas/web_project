@@ -50,7 +50,6 @@ CREATE TABLE IF NOT EXISTS theses (
     assigned_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completion_date TIMESTAMP,
     grade TEXT,
-    ap_number TEXT,
     library_link TEXT,
     presentation_date DATE,
     presentation_time TIME,

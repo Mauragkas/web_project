@@ -171,16 +171,31 @@ class ThesisService {
 
       const operations = [
         {
-          query: `UPDATE theses
-                  SET status = 'Cancelled'
-                  WHERE id = ?`,
+          query: `
+                      UPDATE theses
+                      SET status = 'Cancelled',
+                          cancellation_date = CURRENT_TIMESTAMP,
+                          cancellation_reason = 'Cancelled by instructor during temporary assignment phase'
+                      WHERE id = ?
+                  `,
           params: [assignmentId],
         },
         {
-          query: `UPDATE thesis_topics
-                  SET status = 'Available'
-                  WHERE id = ?`,
+          query: `
+                      UPDATE thesis_topics
+                      SET status = 'Available'
+                      WHERE id = ?
+                  `,
           params: [assignment.topic_id],
+        },
+        {
+          // Add status history record
+          query: `
+                      INSERT INTO thesis_status_history
+                      (thesis_id, old_status, new_status, changed_by, changed_at)
+                      VALUES (?, 'Under Assignment', 'Cancelled', 'Instructor', CURRENT_TIMESTAMP)
+                  `,
+          params: [assignmentId],
         },
       ];
 
@@ -907,6 +922,23 @@ class ThesisService {
       return { success: true, avgGrade };
     } catch (error) {
       console.error("Error marking thesis as completed:", error);
+      throw error;
+    }
+  }
+
+  async getActiveThesisByStudentId(studentId) {
+    try {
+      const query = `
+              SELECT * FROM theses
+              WHERE student_id = ?
+              AND status NOT IN ('Completed', 'Cancelled')
+              ORDER BY assigned_date DESC
+              LIMIT 1
+          `;
+
+      return await getOne(query, [studentId]);
+    } catch (error) {
+      console.error("Error checking student's thesis:", error);
       throw error;
     }
   }

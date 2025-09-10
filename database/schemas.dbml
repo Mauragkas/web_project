@@ -1,0 +1,123 @@
+Table "users" {
+  "id" INTEGER [pk]
+  "username" TEXT [unique, not null]
+  "password" TEXT [not null]
+  "role" TEXT [not null]
+  "email" TEXT [unique]
+  "full_name" TEXT
+  "created_at" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+  "name" TEXT
+  "surname" TEXT
+  "student_number" TEXT
+  "street" TEXT
+  "address_number" TEXT
+  "city" TEXT
+  "postcode" TEXT
+  "father_name" TEXT
+  "landline_telephone" TEXT
+  "mobile_telephone" TEXT
+  "topic" TEXT
+  "landline" TEXT
+  "mobile" TEXT
+  "department" TEXT
+  "university" TEXT
+}
+
+Table "thesis_topics" {
+  "id" INTEGER [pk]
+  "instructor_id" INTEGER [not null]
+  "title" TEXT [not null]
+  "description" TEXT
+  "document_path" TEXT
+  "status" TEXT [default: 'Available']
+  "created_at" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "theses" {
+  "id" INTEGER [pk]
+  "topic_id" INTEGER [not null]
+  "student_id" INTEGER [not null]
+  "supervisor_id" INTEGER [not null]
+  "status" TEXT [default: 'Under Assignment']
+  "assigned_date" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+  "completion_date" TIMESTAMP
+  "grade" TEXT
+  "library_link" TEXT
+  "presentation_date" DATE
+  "presentation_time" TIME
+  "presentation_location" TEXT
+  "presentation_location_type" TEXT
+  "connection_link" TEXT
+  "cancellation_reason" TEXT
+  "ga_number" TEXT
+  "ga_year" TEXT
+  "cancellation_date" TIMESTAMP
+  "draft_path" TEXT
+  "external_links" TEXT
+  "grading_active" BOOLEAN [default: FALSE]
+  "ap_number" TEXT
+}
+
+Table "thesis_status_history" {
+  "id" INTEGER [pk]
+  "thesis_id" INTEGER [not null]
+  "old_status" TEXT [not null]
+  "new_status" TEXT [not null]
+  "changed_by" TEXT [not null]
+  "changed_at" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "committee_members" {
+  "id" INTEGER [pk]
+  "thesis_id" INTEGER [not null]
+  "instructor_id" INTEGER [not null]
+  "status" TEXT [default: 'Invited']
+  "invitation_date" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+  "response_date" TIMESTAMP
+}
+
+Table "thesis_notes" {
+  "id" INTEGER [pk]
+  "thesis_id" INTEGER [not null]
+  "instructor_id" INTEGER [not null]
+  "note_text" TEXT [not null]
+  "created_at" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "grades" {
+  "id" INTEGER [pk]
+  "thesis_id" INTEGER [not null]
+  "instructor_id" INTEGER [not null]
+  "grade_value" REAL [not null]
+  "criteria_json" TEXT
+  "comments" TEXT
+  "created_at" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+  "updated_at" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+
+  Indexes {
+    (thesis_id, instructor_id) [unique]
+  }
+}
+
+Ref:"users"."id" < "thesis_topics"."instructor_id"
+
+Ref:"thesis_topics"."id" < "theses"."topic_id"
+
+Ref:"users"."id" < "theses"."student_id"
+
+Ref:"users"."id" < "theses"."supervisor_id"
+
+Ref:"theses"."id" < "thesis_status_history"."thesis_id"
+
+Ref:"theses"."id" < "committee_members"."thesis_id"
+
+Ref:"users"."id" < "committee_members"."instructor_id"
+
+Ref:"theses"."id" < "thesis_notes"."thesis_id"
+
+Ref:"users"."id" < "thesis_notes"."instructor_id"
+
+Ref:"theses"."id" < "grades"."thesis_id"
+
+Ref:"users"."id" < "grades"."instructor_id"
+

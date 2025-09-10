@@ -49,17 +49,21 @@ class StudentService {
         t.grade,
         t.ap_number,
         t.library_link,
+        t.draft_path,
+        t.external_links,
         tt.title as topic_title,
         tt.description as topic_description,
         tt.document_path as topic_document_path,
         s.full_name as supervisor_name,
         s.email as supervisor_email,
-        GROUP_CONCAT(cm2.full_name, ', ') as committee_members
+        GROUP_CONCAT(cm2.full_name, ', ') as committee_members,
+        u.email, u.street, u.address_number, u.city, u.postcode, u.mobile_telephone, u.landline_telephone
       FROM theses t
       JOIN thesis_topics tt ON t.topic_id = tt.id
       JOIN users s ON t.supervisor_id = s.id
       LEFT JOIN committee_members cm ON cm.thesis_id = t.id
       LEFT JOIN users cm2 ON cm2.id = cm.instructor_id
+      JOIN users u ON t.student_id = u.id
       WHERE t.student_id = ?
       GROUP BY t.id
       ORDER BY t.assigned_date DESC
@@ -252,12 +256,17 @@ class StudentService {
       `SELECT t.*,
                 tt.title as topic_title, tt.description as topic_description, tt.document_path as topic_document_path,
                 s.full_name as supervisor_name, s.email as supervisor_email,
-                u.full_name as student_name, u.email as student_email
+                u.full_name as student_name, u.email as student_email,
+                GROUP_CONCAT(cm2.full_name, ', ') as committee_members
          FROM theses t
          JOIN thesis_topics tt ON t.topic_id = tt.id
          JOIN users s ON t.supervisor_id = s.id
          JOIN users u ON t.student_id = u.id
-         WHERE t.id = ? AND t.student_id = ? AND t.status IN ('Under Examination', 'Graded', 'Completed')`,
+         LEFT JOIN committee_members cm ON cm.thesis_id = t.id AND cm.status = 'Accepted'
+         LEFT JOIN users cm2 ON cm2.id = cm.instructor_id
+         WHERE t.id = ? AND t.student_id = ? AND t.status IN ('Under Examination', 'Graded', 'Completed')
+         GROUP BY t.id
+      `,
       [thesisId, studentId],
     );
     if (!thesis) return null;

@@ -169,7 +169,7 @@ CREATE TABLE thesis_topics (
         );
 INSERT INTO thesis_topics VALUES(12,8,'asdfasdfzxcvdfg','adfhjmfdghjnfghn','/uploads/topics/1751472038315-document.pdf','Under Assignment','2025-07-02 16:00:38');
 INSERT INTO thesis_topics VALUES(20,8,'PDF Updated','PDF changed','/uploads/topics/1751754147983-document.pdf','Available','2025-07-05 22:22:27');
-INSERT INTO thesis_topics VALUES(22,105,'akomninos topic','none',NULL,'Under Assignment','2025-07-20 20:01:39');
+INSERT INTO thesis_topics VALUES(22,105,'akomninos topic','none',NULL,'Available','2025-07-20 20:01:39');
 CREATE TABLE theses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             topic_id INTEGER NOT NULL,
@@ -194,9 +194,9 @@ INSERT INTO theses VALUES(6,9,7,8,'Active','2025-05-28 14:10:57',NULL,NULL,NULL,
 INSERT INTO theses VALUES(7,10,7,8,'Active','2025-06-17 14:12:58',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
 INSERT INTO theses VALUES(8,9,7,8,'Cancelled','2021-06-20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'asdffasdf','20012312313','2025','2025-06-27 14:53:20',NULL,NULL,0,NULL,NULL);
 INSERT INTO theses VALUES(9,7,7,8,'Under Assignment','2025-07-02 15:36:01',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
-INSERT INTO theses VALUES(10,12,7,8,'Under Examination','2025-07-02 16:01:19',NULL,NULL,NULL,NULL,'2025-07-02','12:31','',NULL,NULL,NULL,NULL,'/uploads/thesis_drafts/thesis_unknown_1751478835542.pdf','',0,'online','https://asdfasdf.com');
+INSERT INTO theses VALUES(10,12,7,8,'Completed','2025-07-02 16:01:19','2025-07-20 22:46:44','9.33',NULL,'https://nemertis.upatras.gr/handle/123456789/9999','2025-07-02','12:31','',NULL,NULL,NULL,NULL,'/uploads/thesis_drafts/thesis_unknown_1751478835542.pdf','',1,'online','https://asdfasdf.com');
 INSERT INTO theses VALUES(11,8,7,8,'Under Examination','2025-05-28',NULL,NULL,NULL,NULL,'2025-07-07','15:00','Conference Room B, Computer Science Department',NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
-INSERT INTO theses VALUES(12,22,104,105,'Active','2025-07-20 20:02:03',NULL,NULL,'asdfasdf',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL);
+INSERT INTO theses VALUES(12,22,104,105,'Cancelled','2025-07-20 20:02:03',NULL,NULL,'asdfasdf','https://nemertis.upatras.gr/handle/123456789/9999',NULL,NULL,NULL,'sdfgsdg','asdfasdf','2025','2025-07-20 21:54:20',NULL,NULL,0,NULL,NULL);
 CREATE TABLE committee_members (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             thesis_id INTEGER NOT NULL,
@@ -241,6 +241,8 @@ CREATE TABLE thesis_status_history (
 );
 INSERT INTO thesis_status_history VALUES(1,8,'Active','Cancelled','Instructor (8)','2025-06-27 14:53:20');
 INSERT INTO thesis_status_history VALUES(2,10,'Active','Under Examination','Instructor (8)','2025-07-02 16:15:10');
+INSERT INTO thesis_status_history VALUES(3,12,'Active','Cancelled','Secretariat','2025-07-20 21:54:20');
+INSERT INTO thesis_status_history VALUES(4,10,'Graded','Completed','Secretariat','2025-07-20 22:46:44');
 CREATE TABLE grades (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     thesis_id INTEGER NOT NULL,
@@ -254,10 +256,14 @@ CREATE TABLE grades (
     FOREIGN KEY (instructor_id) REFERENCES users(id),
     UNIQUE(thesis_id, instructor_id)
 );
+INSERT INTO grades VALUES(1,10,8,10.0,NULL,'','2025-07-20 22:11:20','2025-07-20 22:11:20');
+INSERT INTO grades VALUES(2,10,105,9.0,NULL,'','2025-07-20 22:12:08','2025-07-20 22:12:08');
+INSERT INTO grades VALUES(3,10,106,9.0,NULL,'','2025-07-20 22:13:05','2025-07-20 22:13:05');
 INSERT INTO sqlite_sequence VALUES('users',154);
 INSERT INTO sqlite_sequence VALUES('thesis_topics',22);
 INSERT INTO sqlite_sequence VALUES('theses',12);
 INSERT INTO sqlite_sequence VALUES('committee_members',11);
 INSERT INTO sqlite_sequence VALUES('thesis_notes',4);
-INSERT INTO sqlite_sequence VALUES('thesis_status_history',2);
+INSERT INTO sqlite_sequence VALUES('thesis_status_history',4);
+INSERT INTO sqlite_sequence VALUES('grades',3);
 COMMIT;
