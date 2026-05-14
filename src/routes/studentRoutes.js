@@ -26,7 +26,9 @@ const upload = multer({
 });
 
 router.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "../views/student/dashboard.html"));
+  res.sendFile(
+    path.join(__dirname, "../../public/views/student/dashboard.html"),
+  );
 });
 
 // --- API endpoint for dashboard data ---

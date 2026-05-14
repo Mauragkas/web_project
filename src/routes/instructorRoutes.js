@@ -28,10 +28,14 @@ const upload = multer({
 
 // Serve dashboard and topics page
 router.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "../views/instructor/dashboard.html"));
+  res.sendFile(
+    path.join(__dirname, "../../public/views/instructor/dashboard.html"),
+  );
 });
 router.get("/topics", (req, res) => {
-  res.sendFile(path.join(__dirname, "../views/instructor/topics.html"));
+  res.sendFile(
+    path.join(__dirname, "../../public/views/instructor/topics.html"),
+  );
 });
 
 // API: Create thesis topic

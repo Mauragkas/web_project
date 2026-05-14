@@ -5,12 +5,14 @@ const router = express.Router();
 
 // Serve the announcements page
 router.get("/announcements", (req, res) => {
-  res.sendFile(path.join(__dirname, "../views/public/announcements.html"));
+  res.sendFile(
+    path.join(__dirname, "../../public/views/public/announcements.html"),
+  );
 });
 
 // Serve the topic catalog page
 router.get("/topics", (req, res) => {
-  res.sendFile(path.join(__dirname, "../views/public/topics.html"));
+  res.sendFile(path.join(__dirname, "../../public/views/public/topics.html"));
 });
 
 // API endpoint to get available topics

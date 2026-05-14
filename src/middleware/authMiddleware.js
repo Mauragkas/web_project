@@ -56,7 +56,7 @@ function authMiddleware(requiredRole) {
       // For regular requests, show 404
       return res
         .status(404)
-        .sendFile(path.join(__dirname, "../views/404.html"));
+        .sendFile(path.join(__dirname, "../../public/views/404.html"));
     }
 
     // If all checks pass, proceed

@@ -9,7 +9,9 @@ const router = express.Router();
 
 // dashboard route
 router.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "../views/secretariat/dashboard.html"));
+  res.sendFile(
+    path.join(__dirname, "../../public/views/secretariat/dashboard.html"),
+  );
 });
 
 // API endpoint for active and under examination theses

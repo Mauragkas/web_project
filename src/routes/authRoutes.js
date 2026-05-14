@@ -5,7 +5,7 @@ const authController = require("../controllers/authController");
 
 // Serve login page
 router.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "../views/auth/login.html"));
+  res.sendFile(path.join(__dirname, "../../public/views/auth/login.html"));
 });
 
 // API endpoint for login
